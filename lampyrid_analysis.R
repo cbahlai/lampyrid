@@ -13,3 +13,7 @@ lampyrid$year<-year(lampyrid$newdate)
 #because you don't have to deal with day-of-month numbers starting over 
 #in the middle of a phenological event.
 lampyrid$DOY<-yday(lampyrid$newdate)
+
+#download weather data from KBS weather station
+weather<-read.table(file="http://lter.kbs.msu.edu/datatables/7.csv",
+                    header=T, sep=",")
