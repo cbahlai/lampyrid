@@ -17,28 +17,174 @@ lampyrid$DOY<-yday(lampyrid$newdate)
 #download weather data from KBS weather station
 weather<-read.table(file="http://lter.kbs.msu.edu/datatables/7.csv",
                     header=T, sep=",", na.strings="")
+#extract day of year, so we have a cuntinuous variable running for each year.
+#since we're in a temperate northern climate, this is convenient- not too 
+#much insect action happening at the december-january transition, so we 
+#can use the yearly break as a blocking variable for rowing season.
+#it's convenient living where we do! 
+
 weather$DOY<-yday(weather$date)
+
+#do a few simple plots to make sure the data makes sense -this is
+#a good way to check that the importation was sucessful
+
 plot(weather$DOY, weather$air_temp_mean)
 plot(weather$DOY, weather$precipitation)
+
+#because we don't have lampyrid records before 2004, let's cut out the data
+#from before 2003 so we can process the weaqther data more quickly
+weather<-subset(weather, weather$year>2003)
+
+#lets's pre-process these weather data so we get rid of missing values
+# we can write a function to do this for us.
+#if missing data is rare, it is probably safe to assume that missing
+#temperatures are similar to the weather on the day before or after.
+#for the sake of simplicity, let's replace a missing value with the 
+#value for that variable for the day before
+
+#first, define the function
+
+replace.missing<-function(vec){
+  #create a vector to put our new values into
+  New = c()
+  for (i in 1:(length(vec))){
+    if (is.na(vec[i])){
+      vec[i]<-vec[i+1]
+      #if the data is missing, sub in the value from the measurement before
+
+    } else{
+      #if the value is not missing, just pass it through to the result vector
+      vec[i]<-vec[i]
+    }
+    New=c(New, vec[i])
+  }
+  if (any(is.na(New))){
+    replace.missing(New)
+  }
+  return(New)
+}
+
+
+# now create new variables with the cleaned data we're interested in
+weather$air_temp_max_clean<-replace.missing(weather$air_temp_max)
+
+weather$air_temp_min_clean<-replace.missing(weather$air_temp_min)
+
+#check that nothing weird happened with the data when we created this new variable
+
+#did it get all the NAs?
+summary(weather$air_temp_max_clean)
+summary(weather$air_temp_min_clean)
+
+#these plots should produce perfect 1:1 lines
+
+plot(weather$air_temp_max, weather$air_temp_max_clean)
+plot(weather$air_temp_min, weather$air_temp_min_clean)
+
+#they do! That means our function doesn't break anything. YAY!
+
 
 # calculate the degree day accumulation for the first half of the day dd1,
 #assuming a sine wave structure of temperature over the day
 #use a development threshold of 10C, well, because it's a nice number
 #to work with
+#we'll use the model presented in Allen 1976 which uses daily max and min temperatures
+#and assumes temperature follows a sine wave
 
-thresh<-10
-alpha<-(weather$air_temp_max-weather$air_temp_min)/2
+allen<-function(maxi, mini, thresh){
+  #if threshold is not given, assume it's 10 Celcius
+  if(missing(thresh)) {
+    thresh<-10
+  } else {
+    thresh<-thresh
+  }
+  dd1<-c()
+  dd2<-c()
+    for (i in 1:length(maxi)){
+     if (maxi[i]>= thresh & mini[i]<thresh) {
+      #first half of day
+      #amplitude of temperature difference
+      alpha1<-(maxi[i]-mini[i])/2
+      #average temperature
+      avg1<-(maxi[i]+mini[i])/2
+      #theta is time point when temperatur crosses the threshold
+      #assuming temperature is roughly following the sine curve
+      theta1<-asin((thresh-avg1)/alpha1)
+      #use these to calculate degree day accumulation over first half of day
+      dd1.T<-(1/(2*pi))*((avg1-thresh)*(pi/2 - theta1)+alpha1*cos(theta1))
+      dd1<-c(dd1, dd1.T)
+      #second half of day
+      #two possible cases, min temperature on day i+1 could be below thereshold or above
+      #for below threshold:
+      if (mini[i+1]<thresh){
+        #amplitude of temperature difference
+        alpha2<-(maxi[i]-mini[i+1])/2
+        #average temperature
+        avg2<-(maxi[i]+mini[i+1])/2
+        #theta is time point when temperatur crosses the threshold
+        #assuming temperature is roughly following the sine curve
+        theta2<-asin((thresh-avg2)/alpha2)
+        #use these to calculate degree day accumulation over first half of day
+        dd2.T<-(1/(2*pi))*((avg2-thresh)*(pi/2 - theta2)+alpha2*cos(theta2))
+        dd2<-c(dd2, dd2.T)
+      } else { #for above threshold
+        #second half of day
+        avg2<-(maxi[i]+mini[i+1])/2
+        dd2.T<-(avg2-thresh)/2
+        dd2<-c(dd2, dd2.T)
+      }
+      
+     } else if (mini[i]>=thresh){
+       #first half of day
+       avg1<-(maxi[i]+mini[i])/2
+       dd1.T<-(avg1-thresh)/2
+       dd1<-c(dd1, dd1.T)
+       #second half of day, as above, two possible cases
+       if (mini[i+1]>=thresh){
+         avg2<-(maxi[i]+mini[i+1])/2
+         dd2.T<-(avg2-thresh)/2
+         dd2<-c(dd2, dd2.T)
+       } else{
+         #amplitude of temperature difference
+         alpha2<-(maxi[i]-mini[i+1])/2
+         #average temperature
+         avg2<-(maxi[i]+mini[i+1])/2
+         #theta is time point when temperatur crosses the threshold
+         #assuming temperature is roughly following the sine curve
+         theta2<-asin((thresh-avg2)/alpha2)
+         #use these to calculate degree day accumulation over first half of day
+         dd2.T<-(1/(2*pi))*((avg2-thresh)*(pi/2 - theta2)+alpha2*cos(theta2))
+         dd2<-c(dd2, dd2.T)
+       }
+       
+    }
+      else  {
+        #if temperature doesn't get over threshold, no degree days accumulated
+        #first half of day
+        dd1<-c(dd1, 0)
+        #second half of day
+        dd2<-c(dd2, 0)
+    }
+    #total accumulation over the day is just first half of day plus second
+    
+  }
+  
+  return(dd1+dd2)
+  
+}
 
-weather$theta<-weather$flag_air_temp_max
-for (i in length(weather$date)) {
-  if (weather$air_temp_max[i]=>thresh) {
-    weather$theta[i]<-asin((10-(weather$air_temp_max[i]+weather$air_temp_min[i])/2)/alpha[i])
-  } else{
-    weather$theta[i]=0
+#do some checks to make sure the function is working properly
+
+weather$dd<-allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10)
+plot(weather$DOY, weather$dd)
+
+#now write a new function to calculate accumulated degree days
+
+accum.allen<-function(maxi, mini, thresh){
+  dd<-allen(maxi, mini, thresh)
+  dd.accum<-c()
+  for i in dd{
+    #hmm, need a way to sum up over the year, starting anew for each year.
   }
 }
-weather$dd1<-(1/2*pi*((weather$air_temp_max+weather$air_temp_min)/2)-10)*(pi/2-theta)+
-  
-#triangle method
-  
-weather$
+
