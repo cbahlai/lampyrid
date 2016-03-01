@@ -35,6 +35,11 @@ plot(weather$DOY, weather$precipitation)
 #from before 2003 so we can process the weaqther data more quickly
 weather<-subset(weather, weather$year>2003)
 
+#also, these data are sorted in decending order. It's easier to think of this 
+#stuff in ascending order, so let's sort the data by year and DOY
+
+weather<-weather[order(weather$year, weather$DOY),]
+
 #lets's pre-process these weather data so we get rid of missing values
 # we can write a function to do this for us.
 #if missing data is rare, it is probably safe to assume that missing
@@ -49,7 +54,7 @@ replace.missing<-function(vec){
   New = c()
   for (i in 1:(length(vec))){
     if (is.na(vec[i])){
-      vec[i]<-vec[i+1]
+      vec[i]<-vec[i-1]
       #if the data is missing, sub in the value from the measurement before
 
     } else{
@@ -82,6 +87,9 @@ plot(weather$air_temp_max, weather$air_temp_max_clean)
 plot(weather$air_temp_min, weather$air_temp_min_clean)
 
 #they do! That means our function doesn't break anything. YAY!
+
+#we'll need to operate on a dataset that's sorted in a decending way
+#for this because it's easier to think about accumulations that way
 
 
 # calculate the degree day accumulation for the first half of the day dd1,
@@ -176,15 +184,35 @@ allen<-function(maxi, mini, thresh){
 #do some checks to make sure the function is working properly
 
 weather$dd<-allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10)
+
+#plot to make sure nothing weird is happening- look for more degree days midyear,
+#and NO negative values. Looks like we're WINNING!
 plot(weather$DOY, weather$dd)
 
 #now write a new function to calculate accumulated degree days
 
-accum.allen<-function(maxi, mini, thresh){
+
+accum.allen<-function(maxi, mini, thresh, DOY){
   dd<-allen(maxi, mini, thresh)
   dd.accum<-c()
-  for i in dd{
+  for (i in 1:length(dd)){
     #hmm, need a way to sum up over the year, starting anew for each year.
+    #this should do it
+    if (DOY[i]==1){
+      dd.accum.day=0
+    }
+    #the accumulation on day i is the degree day accumulation before
+    #plus the dd accumulated on that day
+    dd.accum.day<-dd.accum.day+dd[i]
+    #add that day's accumulation to the vector
+    dd.accum<-c(dd.accum, dd.accum.day)
   }
+  return (dd.accum)
 }
+ 
+#same sort of checks. Run the function for our data
 
+weather$dd.accum<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10, weather$DOY)
+ #and plot that thing to look for problems:
+plot(weather$DOY, weather$dd.accum)
+#looks good! victory!!!
