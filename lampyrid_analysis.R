@@ -14,10 +14,48 @@ lampyrid$year<-year(lampyrid$newdate)
 #in the middle of a phenological event.
 lampyrid$DOY<-yday(lampyrid$newdate)
 
+#let's look for the data problems we found we used OpenRefine and see if
+#we can impliment our cleaning operations here- that way we have a complete
+#record of EVERYTHING that happened to these data. Recall there were issues 
+#with TREAT_DESC
+#let's look at these columns individually and fix errors as we find them
+#and we should also check for weirdness in our numeric values
+
+summary(lampyrid)
+#looks like there's one missing data point (NA) for adults. Let's ditch
+#it so it doesn't cause any problems in subsequent analyses
+lampyrid<-na.omit(lampyrid)
+summary(lampyrid)
+
+#looks good. Okay, TREAT_DESC:
+
+summary(as.factor(lampyrid$TREAT_DESC))
+#wow, we've got some spelling errors. Let's clean that up
+
+lampyrid$TREAT_DESC<-gsub("Early succesional community", "Early successional community", lampyrid$TREAT_DESC)
+lampyrid$TREAT_DESC<-gsub("Early sucessional community", "Early successional community", lampyrid$TREAT_DESC)
+lampyrid$TREAT_DESC<-gsub("Succesional", "Successional", lampyrid$TREAT_DESC)
+lampyrid$TREAT_DESC<-gsub("Sucessional", "Successional", lampyrid$TREAT_DESC)
+#also convert this column to factor (gsub sometimes turns it into character type)
+lampyrid$TREAT_DESC<-as.factor(lampyrid$TREAT_DESC)
+summary(lampyrid$TREAT_DESC)
+
+#do the same for HABITAT
+summary(as.factor(lampyrid$HABITAT))
+#checks out. Let's make sure R is seeing it as a factor, and also rep and station while we're at it
+
+lampyrid$HABITAT<-as.factor(lampyrid$HABITAT)
+lampyrid$REPLICATE<-as.factor(lampyrid$REPLICATE)
+lampyrid$STATION<-as.factor(lampyrid$STATION)
+
+#one more check to see if the data looks clean
+summary(lampyrid)
+
+
 #download weather data from KBS weather station
 weather<-read.table(file="http://lter.kbs.msu.edu/datatables/7.csv",
                     header=T, sep=",", na.strings="")
-#extract day of year, so we have a cuntinuous variable running for each year.
+#extract day of year, so we have a continuous variable running for each year.
 #since we're in a temperate northern climate, this is convenient- not too 
 #much insect action happening at the december-january transition, so we 
 #can use the yearly break as a blocking variable for rowing season.
@@ -216,3 +254,7 @@ weather$dd.accum<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_c
  #and plot that thing to look for problems:
 plot(weather$DOY, weather$dd.accum)
 #looks good! victory!!!
+
+#so, now we have two datasets that both have information we need in them.
+#let's put it all together in one frame
+
