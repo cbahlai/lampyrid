@@ -73,6 +73,12 @@ plot(weather$DOY, weather$precipitation)
 #from before 2003 so we can process the weaqther data more quickly
 weather<-subset(weather, weather$year>2003)
 
+#lets also get rid of the vairables we don't need:
+weather$flag_precip<-NULL
+weather$flag_air_temp_mean<-NULL
+weather$flag_air_temp_max<-NULL
+weather$flag_air_temp_min<-NULL
+
 #also, these data are sorted in decending order. It's easier to think of this 
 #stuff in ascending order, so let's sort the data by year and DOY
 
@@ -257,4 +263,4 @@ plot(weather$DOY, weather$dd.accum)
 
 #so, now we have two datasets that both have information we need in them.
 #let's put it all together in one frame
-
+lampyrid.weather<-merge(lampyrid, weather, by=c("year", "DOY"), all.x=TRUE)
