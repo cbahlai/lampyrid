@@ -13,6 +13,7 @@ lampyrid$year<-year(lampyrid$newdate)
 #because you don't have to deal with day-of-month numbers starting over 
 #in the middle of a phenological event.
 lampyrid$DOY<-yday(lampyrid$newdate)
+lampyrid$week<-week(lampyrid$newdate)
 
 #let's look for the data problems we found we used OpenRefine and see if
 #we can impliment our cleaning operations here- that way we have a complete
@@ -62,7 +63,7 @@ weather<-read.table(file="http://lter.kbs.msu.edu/datatables/7.csv",
 #it's convenient living where we do! 
 
 weather$DOY<-yday(weather$date)
-
+weather$week<-week(weather$date)
 #do a few simple plots to make sure the data makes sense -this is
 #a good way to check that the importation was sucessful
 
@@ -266,4 +267,4 @@ plot(weather$DOY, weather$dd.accum)
 
 #so, now we have two datasets that both have information we need in them.
 #let's put it all together in one frame
-lampyrid.weather<-merge(lampyrid, weather, by=c("year", "DOY"), all.x=TRUE)
+lampyrid.weather<-merge(lampyrid, weather, by=c("year", "DOY", "week"), all.x=TRUE)
