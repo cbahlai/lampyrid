@@ -268,3 +268,40 @@ plot(weather$DOY, weather$dd.accum)
 #so, now we have two datasets that both have information we need in them.
 #let's put it all together in one frame
 lampyrid.weather<-merge(lampyrid, weather, by=c("year", "DOY", "week"), all.x=TRUE)
+
+library(ggplot2)
+
+lampyrid.doy<-ggplot(lampyrid.weather, aes(DOY, ADULTS, 
+                                           color=factor(year)))+
+  geom_point()
+
+lampyrid.doy
+lampyrid.week<-ggplot(lampyrid.weather, aes(week, ADULTS, 
+                                            color=factor(year)))+
+  geom_point()
+lampyrid.week
+
+# we're interested in looking at more general trends. We'll need to produce 
+#summary data to do this
+
+library(plyr)
+captures.by.year<-ddply(lampyrid.weather, c("year"), summarise,
+      total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS/length(ADULTS)))
+
+captures.by.week.year<-ddply(lampyrid.weather, c("year", "week"), summarise,
+                              total=sum(ADULTS), traps=length(ADULTS), 
+                             avg=sum(ADULTS/length(ADULTS)),
+                             ddacc=max(dd.accum))
+
+
+lampyrid.summary.week<-ggplot(captures.by.week.year, aes(week, avg, 
+                                            color=factor(year)))+
+  geom_point()+geom_smooth(se=FALSE)
+lampyrid.summary.week
+
+lampyrid.summary.ddacc<-ggplot(captures.by.week.year, aes(ddacc, avg, 
+                                                         color=factor(year)))+
+  geom_point()+geom_smooth(se=FALSE)
+lampyrid.summary.ddacc
+
+
