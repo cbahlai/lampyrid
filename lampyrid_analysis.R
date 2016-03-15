@@ -70,8 +70,11 @@ plot(weather$DOY, weather$air_temp_mean)
 plot(weather$DOY, weather$precipitation)
 
 #because we don't have lampyrid records before 2004, let's cut out the data
-#from before 2003 so we can process the weaqther data more quickly
-weather<-subset(weather, weather$year>2003)
+#from before 2003 so we can process the weaqther data more quickly. Also our
+#lampyrid data stops at the end of 2015 and for some reason the new
+#weather station data breaks our code. DANGIT. so we'll cut off the weather
+#data that's causing us problems- we don't need it anyway
+weather<-subset(weather, weather$year>2003& weather$year<2016)
 
 #lets also get rid of the vairables we don't need:
 weather$flag_precip<-NULL
