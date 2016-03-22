@@ -293,11 +293,11 @@ library(plyr)
 
 
 captures.by.year<-ddply(lampyrid.weather, c("year"), summarise,
-      total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS/length(ADULTS)))
+      total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS), ddacc=max(dd.accum))
 
 captures.by.week.year<-ddply(lampyrid.weather, c("year", "week"), summarise,
                               total=sum(ADULTS), traps=length(ADULTS), 
-                             avg=sum(ADULTS/length(ADULTS)),
+                             avg=sum(ADULTS)/length(ADULTS),
                              ddacc=max(dd.accum))
 
 
@@ -311,4 +311,30 @@ lampyrid.summary.ddacc<-ggplot(captures.by.week.year, aes(ddacc, avg,
   geom_point()+geom_smooth(se=FALSE)
 lampyrid.summary.ddacc
 
+captures.by.treatment<-ddply(lampyrid.weather, c("year", "TREAT_DESC"), summarise,
+                             total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS))
 
+lampyrid.summary.treatment<-ggplot(captures.by.treatment, aes(year, avg, 
+                                                          color=factor(TREAT_DESC)))+
+  geom_point()+geom_smooth(se=FALSE)
+lampyrid.summary.treatment
+
+
+captures.by.habitat<-ddply(lampyrid.weather, c("year", "HABITAT"), summarise,
+                             total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS))
+
+lampyrid.summary.habitat<-ggplot(captures.by.habitat, aes(year, avg, 
+                                                              color=factor(HABITAT)))+
+  geom_point()+geom_smooth(se=FALSE)
+lampyrid.summary.habitat
+
+
+
+ddacc.summary.year<-ggplot(captures.by.year, aes(x=as.factor(year), y=ddacc, fill=as.factor(year)))+
+  geom_bar(stat="identity")
+ddacc.summary.year
+
+
+library(pscl)
+lam_model<-glm(ADULTS~week+HABITAT+as.factor(year), data=lampyrid.weather, family="poisson")
+summary(lam_model)
