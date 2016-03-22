@@ -6,6 +6,7 @@ lampyrid<-read.csv(file="https://ndownloader.figshare.com/files/3686040",
 #clean data
 #fix dates, make them ISO'ed
 library(lubridate)
+library(ISOweek)
 lampyrid$newdate<-mdy(lampyrid$DATE)
 #extract year
 lampyrid$year<-year(lampyrid$newdate)
@@ -13,7 +14,8 @@ lampyrid$year<-year(lampyrid$newdate)
 #because you don't have to deal with day-of-month numbers starting over 
 #in the middle of a phenological event.
 lampyrid$DOY<-yday(lampyrid$newdate)
-lampyrid$week<-week(lampyrid$newdate)
+#use ISO week, so we start counting on Monday, not Jan 1 COOL!
+lampyrid$week<-isoweek(lampyrid$newdate)
 
 #let's look for the data problems we found we used OpenRefine and see if
 #we can impliment our cleaning operations here- that way we have a complete
@@ -63,7 +65,7 @@ weather<-read.table(file="http://lter.kbs.msu.edu/datatables/7.csv",
 #it's convenient living where we do! 
 
 weather$DOY<-yday(weather$date)
-weather$week<-week(weather$date)
+weather$week<-isoweek(weather$date)
 #do a few simple plots to make sure the data makes sense -this is
 #a good way to check that the importation was sucessful
 
@@ -269,8 +271,11 @@ plot(weather$DOY, weather$dd.accum)
 #let's put it all together in one frame
 lampyrid.weather<-merge(lampyrid, weather, by=c("year", "DOY", "week"), all.x=TRUE)
 
+#let's take a look at our data now and see what patterns we can see
+
 library(ggplot2)
 
+#plot raw 
 lampyrid.doy<-ggplot(lampyrid.weather, aes(DOY, ADULTS, 
                                            color=factor(year)))+
   geom_point()
@@ -285,6 +290,8 @@ lampyrid.week
 #summary data to do this
 
 library(plyr)
+
+
 captures.by.year<-ddply(lampyrid.weather, c("year"), summarise,
       total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS/length(ADULTS)))
 
