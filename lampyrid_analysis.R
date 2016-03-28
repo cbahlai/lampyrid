@@ -267,6 +267,52 @@ weather$dd.accum<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_c
 plot(weather$DOY, weather$dd.accum)
 #looks good! victory!!!
 
+#but what about preciptiation? our lit search indicated that there could be
+#important things going on with rain and lampyrids. Firstl let's calculate the 
+#precipitation accumulation over the week, then let's look at the number of rainy 
+#days in a week
+
+accum.precip<-function (precip, week){
+    precip.acc<-c()
+    counter<-week[1]
+    accumulation<-0
+    for (i in 1:length(precip)){
+      if(week[i]==counter){
+        accumulation<-accumulation + precip[i]
+      }else{
+        counter<-week[i]
+        accumulation<-precip[i]
+      }
+      precip.acc<-c(precip.acc, accumulation)
+    }
+    return(precip.acc)
+}
+
+#run the precipitation accumulation function
+weather$prec.accum<-accum.precip(weather$precipitation, weather$week)
+
+
+#looks good! now let's count rainy days
+#this is a simple thing, doesn't really need a function to encode for it, but what the heck
+#might as well be consistent with how we've handled processing other weather data
+#encoding rain days as 0/1 will allow us to simply sum up the number of rainy days for whatever time 
+#period we like
+
+rainy.days<-function (precip, week){
+  rainy.days<-c()
+  for (i in 1:length(precip)){
+    if(precip[i]>0){
+      raindays<-1
+    }else{
+      raindays<-0
+    }
+    rainy.days<-c(rainy.days, raindays)
+  }
+  return(rainy.days)
+}
+
+#and now the rain day counter
+weather$rain.days<-rainy.days(weather$precipitation, weather$week)
 #so, now we have two datasets that both have information we need in them.
 #let's put it all together in one frame
 lampyrid.weather<-merge(lampyrid, weather, by=c("year", "DOY", "week"), all.x=TRUE)
@@ -293,21 +339,21 @@ library(plyr)
 
 
 captures.by.year<-ddply(lampyrid.weather, c("year"), summarise,
-      total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS), ddacc=max(dd.accum))
+                        total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS), ddacc=max(dd.accum))
 
 captures.by.week.year<-ddply(lampyrid.weather, c("year", "week"), summarise,
-                              total=sum(ADULTS), traps=length(ADULTS), 
+                             total=sum(ADULTS), traps=length(ADULTS), 
                              avg=sum(ADULTS)/length(ADULTS),
                              ddacc=max(dd.accum))
 
 
 lampyrid.summary.week<-ggplot(captures.by.week.year, aes(week, avg, 
-                                            color=factor(year)))+
+                                                         color=factor(year)))+
   geom_point()+geom_smooth(se=FALSE)
 lampyrid.summary.week
 
 lampyrid.summary.ddacc<-ggplot(captures.by.week.year, aes(ddacc, avg, 
-                                                         color=factor(year)))+
+                                                          color=factor(year)))+
   geom_point()+geom_smooth(se=FALSE)
 lampyrid.summary.ddacc
 
@@ -315,16 +361,16 @@ captures.by.treatment<-ddply(lampyrid.weather, c("year", "TREAT_DESC"), summaris
                              total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS))
 
 lampyrid.summary.treatment<-ggplot(captures.by.treatment, aes(year, avg, 
-                                                          color=factor(TREAT_DESC)))+
+                                                              color=factor(TREAT_DESC)))+
   geom_point()+geom_smooth(se=FALSE)
 lampyrid.summary.treatment
 
 
 captures.by.habitat<-ddply(lampyrid.weather, c("year", "HABITAT"), summarise,
-                             total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS))
+                           total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS))
 
 lampyrid.summary.habitat<-ggplot(captures.by.habitat, aes(year, avg, 
-                                                              color=factor(HABITAT)))+
+                                                          color=factor(HABITAT)))+
   geom_point()+geom_smooth(se=FALSE)
 lampyrid.summary.habitat
 
