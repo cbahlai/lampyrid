@@ -14,7 +14,7 @@ lampyrid$year<-year(lampyrid$newdate)
 #because you don't have to deal with day-of-month numbers starting over 
 #in the middle of a phenological event.
 lampyrid$DOY<-yday(lampyrid$newdate)
-#use ISO week, so we start counting on Monday, not Jan 1 COOL!
+#use ISO week, so we start counting on Monday, not Jan 1, COOL!
 lampyrid$week<-isoweek(lampyrid$newdate)
 
 #let's look for the data problems we found we used OpenRefine and see if
@@ -54,6 +54,26 @@ lampyrid$STATION<-as.factor(lampyrid$STATION)
 #one more check to see if the data looks clean
 summary(lampyrid)
 
+#so we have a small issue with these data. The counts will be strongly zero-biased because we 
+# give each subsample its own observation. When it comes to modelling and plotting, we're going to
+#want to have the subsamples combined (summed), but because sometimes we lost traps (weather, accidental loss)
+#not all plots will have the same number of subsamples
+#we will process our data set so that we've got our subsamples combined by plot date etc and create a vector with counts
+library(reshape2)
+#tell R where the data is by melting it, assigning IDs to the columns
+lampyrid1<-melt(lampyrid, id=c("DATE","TREAT_DESC","HABITAT","REPLICATE","STATION","newdate", "year", "DOY", "week"))
+#cast the data to count up the fireflies
+lampyrid2<-dcast(lampyrid1, year+DOY+week+TREAT_DESC+HABITAT+REPLICATE~., sum)
+#cast the data to count the traps
+lampyrid3<-dcast(lampyrid1, year+DOY+week+TREAT_DESC+HABITAT+REPLICATE~., length)
+
+#let's rename these new vectors within the data frame
+names(lampyrid2)[7]<-"ADULTS"
+names(lampyrid3)[7]<-"TRAPS"
+
+#rename the data frame and combine the number of traps we counted into it from lampyrid3
+lampyrid<-lampyrid2
+lampyrid$TRAPS<-lampyrid3$TRAPS
 
 #download weather data from KBS weather station
 weather<-read.table(file="http://lter.kbs.msu.edu/datatables/7.csv",
@@ -78,6 +98,7 @@ plot(weather$DOY, weather$precipitation)
 #weather station data breaks our code. DANGIT. so we'll cut off the weather
 #data that's causing us problems- we don't need it anyway
 weather<-subset(weather, weather$year>2003& weather$year<2016)
+
 
 #lets also get rid of the vairables we don't need:
 weather$flag_precip<-NULL
@@ -242,7 +263,13 @@ plot(weather$DOY, weather$dd)
 #now write a new function to calculate accumulated degree days
 
 
-accum.allen<-function(maxi, mini, thresh, DOY){
+accum.allen<-function(maxi, mini, thresh, DOY, startday){
+  #if startday is not given, assume it's day 1
+  if(missing(startday)) {
+    startday<-1
+  } else {
+    startday<-startday
+  }
   dd<-allen(maxi, mini, thresh)
   dd.accum<-c()
   for (i in 1:length(dd)){
@@ -254,15 +281,20 @@ accum.allen<-function(maxi, mini, thresh, DOY){
     #the accumulation on day i is the degree day accumulation before
     #plus the dd accumulated on that day
     dd.accum.day<-dd.accum.day+dd[i]
+    
+    #but if the degdays are accumulating before the startday, we want to forget them
+    if (DOY[i]<startday){
+      dd.accum.day=0
+    }
     #add that day's accumulation to the vector
     dd.accum<-c(dd.accum, dd.accum.day)
   }
   return (dd.accum)
 }
  
-#same sort of checks. Run the function for our data
+#same sort of checks. Run the function for our data, giving it a sart day of Mar 15 (DOY 74)
 
-weather$dd.accum<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10, weather$DOY)
+weather$dd.accum<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10, weather$DOY, 74)
  #and plot that thing to look for problems:
 plot(weather$DOY, weather$dd.accum)
 #looks good! victory!!!
@@ -313,9 +345,22 @@ rainy.days<-function (precip, week){
 
 #and now the rain day counter
 weather$rain.days<-rainy.days(weather$precipitation, weather$week)
+
+#now we need to summarize the weather data so it gives us the information we want at a weekly resolution
+#just like we have for the fireflies
+library(plyr)
+
+weather1<-ddply(weather, c("year", "week"), summarise,
+                Tmax=max(air_temp_max_clean), Tmin=min(air_temp_min_clean), 
+                dd.accum=max(dd.accum), prec.accum=max(prec.accum), 
+                rain.days=sum(rain.days))
+
+
 #so, now we have two datasets that both have information we need in them.
 #let's put it all together in one frame
-lampyrid.weather<-merge(lampyrid, weather, by=c("year", "DOY", "week"), all.x=TRUE)
+
+
+lampyrid.weather<-merge(lampyrid, weather1, by=c("year","week"), all.x=TRUE)
 
 #let's take a look at our data now and see what patterns we can see
 
@@ -323,42 +368,47 @@ library(ggplot2)
 
 #plot raw 
 lampyrid.doy<-ggplot(lampyrid.weather, aes(DOY, ADULTS, 
-                                           color=factor(year)))+
+                    color=factor(year)))+
   geom_point()
 
 lampyrid.doy
 lampyrid.week<-ggplot(lampyrid.weather, aes(week, ADULTS, 
-                                            color=factor(year)))+
+                      color=factor(year)))+
   geom_point()
 lampyrid.week
 
 # we're interested in looking at more general trends. We'll need to produce 
 #summary data to do this
 
-library(plyr)
-
 
 captures.by.year<-ddply(lampyrid.weather, c("year"), summarise,
-                        total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS), ddacc=max(dd.accum))
+                        total=sum(ADULTS), traps=sum(TRAPS), avg=sum(ADULTS)/sum(TRAPS), ddacc=max(dd.accum))
 
 captures.by.week.year<-ddply(lampyrid.weather, c("year", "week"), summarise,
-                             total=sum(ADULTS), traps=length(ADULTS), 
-                             avg=sum(ADULTS)/length(ADULTS),
+                             total=sum(ADULTS), traps=sum(TRAPS), 
+                             avg=sum(ADULTS)/sum(TRAPS),
                              ddacc=max(dd.accum))
 
 
+#look at captures by week, over the growing season, by year
 lampyrid.summary.week<-ggplot(captures.by.week.year, aes(week, avg, 
                                                          color=factor(year)))+
   geom_point()+geom_smooth(se=FALSE)
 lampyrid.summary.week
+
+#look at captures by degree day accumulation
 
 lampyrid.summary.ddacc<-ggplot(captures.by.week.year, aes(ddacc, avg, 
                                                           color=factor(year)))+
   geom_point()+geom_smooth(se=FALSE)
 lampyrid.summary.ddacc
 
+#we want to look at captures by treatment 
+#when we look at it by plant community (habitat), things get a little wackier because of the three year crop rotation. 
+#It looks like we get very good beahvior of the loess when we use TREAT_DESC
+
 captures.by.treatment<-ddply(lampyrid.weather, c("year", "TREAT_DESC"), summarise,
-                             total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS))
+                             total=sum(ADULTS), traps=sum(TRAPS), avg=sum(ADULTS)/sum(TRAPS))
 
 lampyrid.summary.treatment<-ggplot(captures.by.treatment, aes(year, avg, 
                                                               color=factor(TREAT_DESC)))+
@@ -374,13 +424,24 @@ lampyrid.summary.habitat<-ggplot(captures.by.habitat, aes(year, avg,
   geom_point()+geom_smooth(se=FALSE)
 lampyrid.summary.habitat
 
+#regardless of how we plot it, we see an interesting pattern in the population variation- basically, a 6-7 year oscillation.
+#so the question is, is there and obvious environmental cause?
+#compute yearly weather summary from weather data (dont want this calulation to be affectred by length of sampling season)
+weather.by.year<-ddply(weather1, c("year"), summarise,
+                        precip=sum(prec.accum), rain.days=sum(rain.days), ddacc=max(dd.accum))
 
+#plot degree day accumulations by year, see if that explains it
 
-ddacc.summary.year<-ggplot(captures.by.year, aes(x=as.factor(year), y=ddacc, fill=as.factor(year)))+
+ddacc.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=ddacc, fill=as.factor(year)))+
   geom_bar(stat="identity")
 ddacc.summary.year
 
+#what about amount of precipitation? say number of rainy days
+
+
 
 library(pscl)
-lam_model<-glm(ADULTS~week+HABITAT+as.factor(year), data=lampyrid.weather, family="poisson")
+
+
+lam_model<-glm(ADULTS~week+HABITAT+as.factor(year), offset=TRAPS, data=lampyrid.weather, family="poisson")
 summary(lam_model)
