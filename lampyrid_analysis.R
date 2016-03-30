@@ -452,6 +452,99 @@ treatment.boxplot<-ggplot(captures.by.treatment, aes(factor(TREAT_DESC), total))
   geom_boxplot(aes(fill=factor(TREAT_DESC)))
 treatment.boxplot
 
+
+#multivariate analysis. So we want to see if the habitat use patterns of the lampyrids have
+#changed, both within season and through the years
+#to do this, we'll need to reshape the data into two different matrices where we have 
+#abundance of fireflies by TREAT_DESC at yearly and weekly resolutions- a cros-tab,
+#wide format data. 
+
+#start by building the matrices
+#we can use our previously melted data fram 'lampirid1' and cast it as needed
+
+#cast at the yearly resolution first
+landscape.year<-dcast(lampyrid1, year+REPLICATE~TREAT_DESC, sum)
+landscape.week<-dcast(lampyrid1, year+week+REPLICATE~TREAT_DESC, sum)
+
+#there are some weeks where zero fireflies were captured. We need to remove these 
+#weeks from the matrix before we can continue
+
+landscape.week$sums<-rowSums(landscape.week[4:13])
+landscape.week<-landscape.week[which(landscape.week$sums>0),]
+landscape.week$sums<-NULL
+
+#now we need to create 'environmental' matricies- corresponding environmental 
+#variables that may offer explanations about what is going on when we run our 
+#multivariate analysis
+#we already computed 'weather.by.year' but will need to also compute the same for 
+#our weekly analysis
+weather.by.week<-ddply(weather1, c("year", "week"), summarise,
+                       precip=sum(prec.accum), rain.days=sum(rain.days), ddacc=max(dd.accum))
+
+#now create the environmental matrix, preserving order from the community matricies by
+#creating them from the community matrix
+
+env.landscape.year<-landscape.year[,1:2]
+env.landscape.week<-landscape.week[,1:3]
+
+#we now need to pull our weather summary data into these matrices
+env.landscape.year<-merge(env.landscape.year, weather.by.year, by=c("year"), all.x=TRUE)
+env.landscape.week<-merge(env.landscape.week, weather.by.week, by=c("year", "week"), all.x=TRUE)
+
+#finally strip out the env data
+landscape.year<-landscape.year[,3:12]
+landscape.week<-landscape.week[,4:13]
+
+#Ok! data is ready for some NMDSing! WOOO
+library(vegan)
+
+ord.year<-metaMDS(landscape.year, autotransform=TRUE)
+ord.year
+#so, MetaMDS assumes the x axis of our matrix is species and y is sites. We are
+#screwing with this by instead looking at sites over samples for one species. So when I call "sites"
+#here I'm actually calling sampling times. Just thought you should know
+
+plot(ord.year, disp='sites', type='n')
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2004"), col="red")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2005"), col="orange")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2006"), col="yellow")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2007"), col="green")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2008"), col="cyan")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2009"), col="blue")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2010"), col="violet")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2011"), col="purple")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2012"), col="black")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2013"), col="brown")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2014"), col="pink")
+points(ord.year, display='sites', select=which(env.landscape.year$year=="2015"), col="tan")
+ordilabel(ord.year, display="species", cex=0.75, col="black")
+
+
+#repeat with week?
+
+ord.week<-metaMDS(landscape.week, autotransform=TRUE)
+ord.week
+#so, MetaMDS assumes the x axis of our matrix is species and y is sites. We are
+#screwing with this by instead looking at sites over samples for one species. So when I call "sites"
+#here I'm actually calling sampling times. Just thought you should know
+
+plot(ord.week, disp='sites', type='n')
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2004"), col="red")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2005"), col="orange")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2006"), col="yellow")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2007"), col="green")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2008"), col="cyan")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2009"), col="blue")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2010"), col="violet")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2011"), col="purple")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2012"), col="black")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2013"), col="brown")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2014"), col="pink")
+points(ord.week, display='sites', select=which(env.landscape.year$year=="2015"), col="tan")
+ordilabel(ord.week, display="species", cex=0.75, col="black")
+
+
+
 library(pscl)
 
 
