@@ -387,7 +387,7 @@ captures.by.year<-ddply(lampyrid.weather, c("year"), summarise,
 captures.by.week.year<-ddply(lampyrid.weather, c("year", "week"), summarise,
                              total=sum(ADULTS), traps=sum(TRAPS), 
                              avg=sum(ADULTS)/sum(TRAPS),
-                             ddacc=max(dd.accum))
+                             ddacc=max(dd.accum), rain.days=max(rain.days))
 
 
 #look at captures by week, over the growing season, by year
@@ -437,8 +437,20 @@ ddacc.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=ddacc, fill
 ddacc.summary.year
 
 #what about amount of precipitation? say number of rainy days
+rainday.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=rain.days, fill=as.factor(year)))+
+  geom_bar(stat="identity")
+rainday.summary.year
 
+#and total precipitation
+precip.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=precip, fill=as.factor(year)))+
+  geom_bar(stat="identity")
+precip.summary.year
 
+plot(weather.by.year$rain.days,weather.by.year$ddacc)
+ 
+treatment.boxplot<-ggplot(captures.by.treatment, aes(factor(TREAT_DESC), total))+
+  geom_boxplot(aes(fill=factor(TREAT_DESC)))
+treatment.boxplot
 
 library(pscl)
 
