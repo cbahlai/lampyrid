@@ -467,7 +467,7 @@ landscape.year<-dcast(lampyrid1, year+REPLICATE~TREAT_DESC, sum)
 landscape.week<-dcast(lampyrid1, year+week+REPLICATE~TREAT_DESC, sum)
 
 #there are some weeks where zero fireflies were captured. We need to remove these 
-#weeks from the matrix before we can continue
+#weeks from the matrix before we can continue-
 
 landscape.week$sums<-rowSums(landscape.week[4:13])
 landscape.week<-landscape.week[which(landscape.week$sums>0),]
@@ -524,24 +524,27 @@ ordilabel(ord.year, display="species", cex=0.75, col="black")
 
 ord.week<-metaMDS(landscape.week, autotransform=TRUE)
 ord.week
+#extract data for ggplot
+ord.week.data<- data.frame(MDS1 = ord.week$points[,1], MDS2 = ord.week$points[,2])
 #so, MetaMDS assumes the x axis of our matrix is species and y is sites. We are
 #screwing with this by instead looking at sites over samples for one species. So when I call "sites"
 #here I'm actually calling sampling times. Just thought you should know
+ordfit.week<-envfit(ord.week~as.factor(year)+week+precip+ddacc, data=env.landscape.week, perm=1000)
+summary(ordfit.week)
+ordfit.week
+ordfit.week.data<-as.data.frame(ordfit.week$vectors$arrows*sqrt(ordfit.week$vectors$r))
+ordfit.week.data$species<-rownames(ordfit.week.data)
 
-plot(ord.week, disp='sites', type='n')
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2004"), col="red")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2005"), col="orange")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2006"), col="yellow")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2007"), col="green")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2008"), col="cyan")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2009"), col="blue")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2010"), col="violet")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2011"), col="purple")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2012"), col="black")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2013"), col="brown")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2014"), col="pink")
-points(ord.week, display='sites', select=which(env.landscape.year$year=="2015"), col="tan")
-ordilabel(ord.week, display="species", cex=0.75, col="black")
+#lets's make this go! https://oliviarata.wordpress.com/2014/04/17/ordinations-in-ggplot2/ is tutorial I'm using here
+
+ggplot(ord.week.data, aes(MDS1, MDS2, color=as.factor(env.landscape.week$year)))+
+  geom_point()+
+  geom_segment(data=ordfit.week.data,aes(x=0,xend=NMDS1,y=0,yend=NMDS2),
+               #arrow = arrow(length = unit(0.5, "cm")),
+               colour="grey",inherit_aes=FALSE) + 
+  geom_text(data=ordfit.week.data,aes(x=NMDS1,y=NMDS2,label=species),size=5)+
+  coord_fixed()
+
 
 
 
