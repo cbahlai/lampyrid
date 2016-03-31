@@ -460,11 +460,13 @@ treatment.boxplot
 #wide format data. 
 
 #start by building the matrices
-#we can use our previously melted data fram 'lampirid1' and cast it as needed
+#we can use our previously melted data fram 'lampyrid1' and cast it as needed
+#because of unequal numbers of reps between forest and main sites, but same number of subsamples 
+#per rep, we'll treat subsamples as rep for this analysis and pool by rep instead
 
 #cast at the yearly resolution first
-landscape.year<-dcast(lampyrid1, year+REPLICATE~TREAT_DESC, sum)
-landscape.week<-dcast(lampyrid1, year+week+REPLICATE~TREAT_DESC, sum)
+landscape.year<-dcast(lampyrid1, year+STATION~TREAT_DESC, sum)
+landscape.week<-dcast(lampyrid1, year+week+STATION~TREAT_DESC, sum)
 
 #there are some weeks where zero fireflies were captured. We need to remove these 
 #weeks from the matrix before we can continue-
@@ -505,6 +507,7 @@ ord.year
 #here I'm actually calling sampling times. Just thought you should know
 
 plot(ord.year, disp='sites', type='n')
+ordihull(ord.year,groups=env.landscape.year$year,draw="polygon",col="grey90",label=T)
 points(ord.year, display='sites', select=which(env.landscape.year$year=="2004"), col="red")
 points(ord.year, display='sites', select=which(env.landscape.year$year=="2005"), col="orange")
 points(ord.year, display='sites', select=which(env.landscape.year$year=="2006"), col="yellow")
@@ -547,9 +550,19 @@ ggplot(ord.week.data, aes(MDS1, MDS2, color=as.factor(env.landscape.week$year)))
 
 
 
+#finally, let's do some generalized linear modelling to see what's important and if we can explain what's going on
+#we've clearly got a quadratic resonse to degree day accumulation, and since we're dealing with count data, we should model 
+#it using a poisson structure (or negative binomial if we've got a high residual deviance)
 
-library(pscl)
+library(glmmADMB)
+#create a squared term so we can build a model with a quadratic in it
+lampyrid.weather$dd.accum2<-(lampyrid.weather$dd.accum)^2
 
 
-lam_model<-glm(ADULTS~week+HABITAT+as.factor(year), offset=TRAPS, data=lampyrid.weather, family="poisson")
+#this is the "all in" model but a lot of the predictors are autocorrelated with each other
+#for example, week would be very correlated with DD accumulation, precip will likely be correlated with rainy days
+#but let's run it anyway, so we can begin to get an idea  of how this model will look
+lam_model<-glmmadmb(ADULTS~TREAT_DESC+as.factor(year)*(dd.accum2+dd.accum)+prec.accum+rain.days+Tmin+Tmax
+                    +offset(log(TRAPS), data=lampyrid.weather, family="poisson")
 summary(lam_model)
+
