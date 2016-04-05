@@ -588,9 +588,9 @@ summary(lam_model)
 x<-(1:length(lampyrid.weather$DOY))
 lampyrid.weather$predicted<-(exp(predict(lam_model,lampyrid.weather)))
 
-
-
 plot(x, lampyrid.weather$predicted)
 plot(x, lampyrid.weather$ADULTS)
 
+test<-lm(predicted~0+ADULTS, data=lampyrid.weather)
+summary(test)
 
