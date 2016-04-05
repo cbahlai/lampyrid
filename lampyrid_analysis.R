@@ -424,6 +424,16 @@ lampyrid.summary.habitat<-ggplot(captures.by.habitat, aes(year, avg,
   geom_point()+geom_smooth(se=FALSE)
 lampyrid.summary.habitat
 
+#we want to look at captures by treatment relative to degree day accumulation too- are peaks earlier or later by crop? 
+
+captures.by.treatment.dd<-ddply(lampyrid.weather, c("year","week","TREAT_DESC"), summarise,
+                             total=sum(ADULTS), traps=sum(TRAPS), avg=sum(ADULTS)/sum(TRAPS), ddacc=max(dd.accum))
+
+lampyrid.summary.treatment.dd<-ggplot(captures.by.treatment.dd, aes(ddacc, avg, 
+                                                              color=factor(TREAT_DESC)))+
+  geom_point()+geom_smooth(se=FALSE)
+lampyrid.summary.treatment.dd
+
 #regardless of how we plot it, we see an interesting pattern in the population variation- basically, a 6-7 year oscillation.
 #so the question is, is there and obvious environmental cause?
 #compute yearly weather summary from weather data (dont want this calulation to be affectred by length of sampling season)
@@ -553,16 +563,34 @@ ggplot(ord.week.data, aes(MDS1, MDS2, color=as.factor(env.landscape.week$year)))
 #finally, let's do some generalized linear modelling to see what's important and if we can explain what's going on
 #we've clearly got a quadratic resonse to degree day accumulation, and since we're dealing with count data, we should model 
 #it using a poisson structure (or negative binomial if we've got a high residual deviance)
+#we'll use the MASS package
 
-library(glmmADMB)
+library(MASS)
 #create a squared term so we can build a model with a quadratic in it
 lampyrid.weather$dd.accum2<-(lampyrid.weather$dd.accum)^2
 
 
-#this is the "all in" model but a lot of the predictors are autocorrelated with each other
-#for example, week would be very correlated with DD accumulation, precip will likely be correlated with rainy days
-#but let's run it anyway, so we can begin to get an idea  of how this model will look
-lam_model<-glmmadmb(ADULTS~TREAT_DESC+as.factor(year)*(dd.accum2+dd.accum)+prec.accum+rain.days+Tmin+Tmax
-                    +offset(log(TRAPS), data=lampyrid.weather, family="poisson")
+
+
+#After some initial fiddling, we find out that rain.days is a better predictor than precipitation accumulation, and given that these are 
+#seriously autocorrelated, let's just use rain days
+#we know TREAT_DESC is probably not important in interacting with dd.acc as we did not observe major tends by treatment when we looked at 
+#trends in captures by degree day accumulation by  treatment so we won't look for interactions
+#finally, because of convergence problems using glm.nb, we determined theta (dispersion parameter) iteratively
+#using glm with a negative binomial family instead. Less elegant and more labour intensive- but really brought residual deviance and AIC
+#values down, indicating a much better fit
+
+lam_model<-glm(ADULTS~dd.accum+dd.accum2*(as.factor(year)+rain.days)+TREAT_DESC, 
+               offset=TRAPS, data=lampyrid.weather, family=negative.binomial(0.6))
 summary(lam_model)
+
+#Let's just do a quick look to see how our model predictions look
+x<-(1:length(lampyrid.weather$DOY))
+lampyrid.weather$predicted<-(exp(predict(lam_model,lampyrid.weather)))
+
+
+
+plot(x, lampyrid.weather$predicted)
+plot(x, lampyrid.weather$ADULTS)
+
 
