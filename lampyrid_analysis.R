@@ -584,6 +584,7 @@ lam_model<-glm(ADULTS~dd.accum+dd.accum2*(as.factor(year)+rain.days)+TREAT_DESC,
                offset=TRAPS, data=lampyrid.weather, family=negative.binomial(0.6))
 summary(lam_model)
 
+
 #Let's just do a quick look to see how our model predictions look
 x<-(1:length(lampyrid.weather$DOY))
 lampyrid.weather$predicted<-(exp(predict(lam_model,lampyrid.weather)))
@@ -594,3 +595,10 @@ plot(x, lampyrid.weather$ADULTS)
 test<-lm(predicted~0+ADULTS, data=lampyrid.weather)
 summary(test)
 
+
+lampyrid.summary.ddacc<-ggplot(lampyrid.weather, aes(dd.accum, ADULTS, 
+                                                          color=factor(year)))+
+  geom_smooth(se=FALSE)
++
+  geom_smooth(aes(dd.accum, predicted), se=FALSE)
+lampyrid.summary.ddacc
