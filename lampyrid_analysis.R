@@ -292,9 +292,9 @@ accum.allen<-function(maxi, mini, thresh, DOY, startday){
   return (dd.accum)
 }
  
-#same sort of checks. Run the function for our data, giving it a sart day of Mar 15 (DOY 74)
+#same sort of checks. Run the function for our data, giving it a start day of Mar 21 (DOY 80) (1st day of spring, ish)
 
-weather$dd.accum<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10, weather$DOY, 74)
+weather$dd.accum<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10, weather$DOY, 80)
  #and plot that thing to look for problems:
 plot(weather$DOY, weather$dd.accum)
 #looks good! victory!!!
@@ -658,5 +658,27 @@ peaks.year<-ggplot(peaks, aes(x=as.factor(year), y=peak, fill=as.factor(year)))+
   geom_bar(stat="identity")+geom_errorbar(aes(ymin=peak-peak.err, ymax=peak+peak.err))
 peaks.year
 
-climate.test<-lm(peak~year, data=peaks)
+#ok, now let's figure out which week each peak occured in
+weeks<-c()
+for (i in 1:length(peaks$year)){
+  #set an arbitrariliy high 'last week' dd caccumulation so the first condition is never
+  #met in the first iteration for each year
+  ddlastweek<-10000
+    for(j in 1:length(weather.by.week$year)){
+      if ((peaks$year[i]==weather.by.week$year[j])&
+          (peaks$peak[i]>ddlastweek)&
+          (peaks$peak[i]<weather.by.week$ddacc[j])){
+        week<-weather.by.week$week[j]
+        weeks<-c(weeks, week)
+        break
+      }
+      else{
+        ddlastweek<-weather.by.week$ddacc[j]
+      }
+    }
+}
+#put it into our peak object
+peaks$week<-weeks
+
+climate.test<-lm(peak~year+week, data=peaks)
 summary(climate.test)
