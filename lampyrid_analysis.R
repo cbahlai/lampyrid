@@ -550,13 +550,13 @@ ordfit.week.data$species<-rownames(ordfit.week.data)
 
 #lets's make this go! https://oliviarata.wordpress.com/2014/04/17/ordinations-in-ggplot2/ is tutorial I'm using here
 
-ggplot(ord.week.data, aes(MDS1, MDS2, color=as.factor(env.landscape.week$year)))+
-  geom_point()+
-  geom_segment(data=ordfit.week.data,aes(x=0,xend=NMDS1,y=0,yend=NMDS2),
+#ggplot(ord.week.data, aes(MDS1, MDS2, color=as.factor(env.landscape.week$year)))+
+#  geom_point()+
+#  geom_segment(data=ordfit.week.data,aes(x=0,xend=NMDS1,y=0,yend=NMDS2),
                #arrow = arrow(length = unit(0.5, "cm")),
-               colour="grey",inherit_aes=FALSE) + 
-  geom_text(data=ordfit.week.data,aes(x=NMDS1,y=NMDS2,label=species),size=5)+
-  coord_fixed()
+#               colour="grey",inherit_aes=FALSE) + 
+# geom_text(data=ordfit.week.data,aes(x=NMDS1,y=NMDS2,label=species),size=5)+
+#  coord_fixed()
 
 
 
@@ -580,7 +580,7 @@ lampyrid.weather$dd.accum2<-(lampyrid.weather$dd.accum)^2
 #using glm with a negative binomial family instead. Less elegant and more labour intensive- but really brought residual deviance and AIC
 #values down, indicating a much better fit
 
-lam_model<-glm(ADULTS~dd.accum+dd.accum2*(as.factor(year)+rain.days)+TREAT_DESC, 
+lam_model<-glm(ADULTS~dd.accum+dd.accum2*(as.factor(year))+TREAT_DESC, 
                offset=TRAPS, data=lampyrid.weather, family=negative.binomial(0.6))
 summary(lam_model)
 
@@ -589,16 +589,74 @@ summary(lam_model)
 x<-(1:length(lampyrid.weather$DOY))
 lampyrid.weather$predicted<-(exp(predict(lam_model,lampyrid.weather)))
 
-plot(x, lampyrid.weather$predicted)
-plot(x, lampyrid.weather$ADULTS)
+plot(x, lampyrid.weather$predicted, ylim=c(0, 100))
+plot(x, lampyrid.weather$ADULTS, ylim=c(0, 100))
 
 test<-lm(predicted~0+ADULTS, data=lampyrid.weather)
 summary(test)
 
+#Let's see how well the model works when we look at data with a lower resolution (to damp out a bit of sampling variability)
 
-lampyrid.summary.ddacc<-ggplot(lampyrid.weather, aes(dd.accum, ADULTS, 
+lampyrid.weather.summary<-ddply(lampyrid.weather, c("year", "week", "TREAT_DESC"), summarise,
+                             ADULTS=sum(ADULTS), TRAPS=sum(TRAPS), predicted=sum(predicted),
+                             avg=sum(ADULTS)/sum(TRAPS), avgpred=sum(predicted)/sum(TRAPS),
+                             dd.accum=max(dd.accum), rain.days=max(rain.days))
+
+
+lampyrid.summary.ddacc<-ggplot(lampyrid.weather.summary, aes(dd.accum, avg, 
                                                           color=factor(year)))+
+  geom_point()+
   geom_smooth(se=FALSE)
-+
-  geom_smooth(aes(dd.accum, predicted), se=FALSE)
 lampyrid.summary.ddacc
+
+
+lampyrid.summary.ddacc.PRED<-ggplot(lampyrid.weather.summary, aes(dd.accum, avg, 
+                                                     color=factor(year)))+
+  geom_point()+
+  geom_smooth(aes(dd.accum, avgpred), se=FALSE)
+lampyrid.summary.ddacc.PRED
+
+#Cool! So now we want to see how the peak is varying by year, and see if there are any environmental parameters that explain it
+#we first need to extract the coefficients from the lam_model
+
+coef<-as.data.frame(summary(lam_model)$coefficients)
+#get rid of those pesky t and P statistics
+coef<-coef[,1:2]
+
+
+
+ddcoef<-coef$Estimate[2]
+dd2coef<-coef$Estimate[3]
+ddcoef.err<-coef$"Std. Error"[2]
+dd2coef.err<-coef$"Std. Error"[3]
+
+#create a vector of years
+year<-(2004:2015)
+
+#create vector of coefficients
+#remember 2004 is the 'intercept' vector so it's unmodified, we'll give it a year 
+#modifier and error of zero
+
+yearcoef<-c(0, coef$Estimate[24:34])
+yearcoef.err<-c(0, coef$"Std. Error"[24:34])
+
+#create a new data frame to integrate the coeficients with the year vector
+peaks<-as.data.frame(cbind(year, yearcoef, yearcoef.err))
+
+#peak will occur at -ddcoeficient/(2(dd2coeficient+year coeficient))
+peaks$peak<- -ddcoef/(2*(dd2coef+yearcoef))
+
+#peak error calculated using the general error propagation formula
+#this will be a bit inelegant, but I calculated the partial derrivatives 
+#relative to each variable myself!
+peaks$peak.err<-sqrt((2*(dd2coef+yearcoef))^(-2) *ddcoef.err^2+
+                       (ddcoef/(2*(dd2coef+yearcoef))^2)^2*(dd2coef.err^2+yearcoef.err^2))
+
+#let's visualize this!
+
+peaks.year<-ggplot(peaks, aes(x=as.factor(year), y=peak, fill=as.factor(year)))+
+  geom_bar(stat="identity")+geom_errorbar(aes(ymin=peak-peak.err, ymax=peak+peak.err))
+peaks.year
+
+climate.test<-lm(peak~year, data=peaks)
+summary(climate.test)
