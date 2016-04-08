@@ -3,6 +3,10 @@
 lampyrid<-read.csv(file="https://ndownloader.figshare.com/files/3686040",
                    header=T)
 
+#what day of the year should we start the analysis on? 
+#giving it a start day of Mar 1
+start<-60
+
 #clean data
 #fix dates, make them ISO'ed
 library(lubridate)
@@ -292,15 +296,20 @@ accum.allen<-function(maxi, mini, thresh, DOY, startday){
   return (dd.accum)
 }
  
-#same sort of checks. Run the function for our data, giving it a start day of Mar 21 (DOY 80) (1st day of spring, ish)
+#same sort of checks. Run the function for our data
 
-weather$dd.accum<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10, weather$DOY, 80)
+weather$dd.accum<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10, weather$DOY, start)
  #and plot that thing to look for problems:
 plot(weather$DOY, weather$dd.accum)
 #looks good! victory!!!
 
+#let's also compute degree day accumulation from the beginning of year- we may need to see how the winter affected 
+#the lampyrids if we can't explain all the variation
+weather$dd.accum0<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10, weather$DOY, 1)
+
+
 #but what about preciptiation? our lit search indicated that there could be
-#important things going on with rain and lampyrids. Firstl let's calculate the 
+#important things going on with rain and lampyrids. First let's calculate the 
 #precipitation accumulation over the week, then let's look at the number of rainy 
 #days in a week
 
@@ -346,6 +355,42 @@ rainy.days<-function (precip, week){
 #and now the rain day counter
 weather$rain.days<-rainy.days(weather$precipitation, weather$week)
 
+#finally, we need to be able to compute the accumulated precipitation over the season from a given timepoint
+#another function? I think SO! base this one on the degree day accumulation function 
+
+
+accum.precip.time<-function(precip, DOY, startday){
+  #if startday is not given, assume it's day 1
+  if(missing(startday)) {
+    startday<-1
+  } else {
+    startday<-startday
+  }
+  prec.accum<-c()
+  for (i in 1:length(DOY)){
+    #hmm, need a way to sum up over the year, starting anew for each year.
+    #this should do it
+    if (DOY[i]==1){
+      prec.accum.day=0
+    }
+    #the accumulation on day i is the precip accumulation before
+    #plus the precip accumulated on that day
+    prec.accum.day<-prec.accum.day+precip[i]
+    
+    #but if the precip is accumulating before the startday, we want to forget them
+    if (DOY[i]<startday){
+      prec.accum.day=0
+    }
+    #add that day's accumulation to the vector
+    prec.accum<-c(prec.accum, prec.accum.day)
+  }
+  return (prec.accum)
+}
+
+weather$prec.accum.0<-accum.precip.time(weather$precipitation, weather$DOY, start)
+#and plot that thing to look for problems:
+plot(weather$DOY, weather$prec.accum.0)
+
 #now we need to summarize the weather data so it gives us the information we want at a weekly resolution
 #just like we have for the fireflies
 library(plyr)
@@ -353,7 +398,7 @@ library(plyr)
 weather1<-ddply(weather, c("year", "week"), summarise,
                 Tmax=max(air_temp_max_clean), Tmin=min(air_temp_min_clean), 
                 dd.accum=max(dd.accum), prec.accum=max(prec.accum), 
-                rain.days=sum(rain.days))
+                rain.days=sum(rain.days), prec.accum.0=max(prec.accum.0))
 
 
 #so, now we have two datasets that both have information we need in them.
@@ -491,7 +536,7 @@ landscape.week$sums<-NULL
 #we already computed 'weather.by.year' but will need to also compute the same for 
 #our weekly analysis
 weather.by.week<-ddply(weather1, c("year", "week"), summarise,
-                       precip=sum(prec.accum), rain.days=sum(rain.days), ddacc=max(dd.accum))
+                       precip=max(prec.accum), rain.days=sum(rain.days), ddacc=max(dd.accum), precip.0=max(prec.accum.0))
 
 #now create the environmental matrix, preserving order from the community matricies by
 #creating them from the community matrix
@@ -535,18 +580,18 @@ ordilabel(ord.year, display="species", cex=0.75, col="black")
 
 #repeat with week?
 
-ord.week<-metaMDS(landscape.week, autotransform=TRUE)
-ord.week
+#ord.week<-metaMDS(landscape.week, autotransform=TRUE)
+#ord.week
 #extract data for ggplot
-ord.week.data<- data.frame(MDS1 = ord.week$points[,1], MDS2 = ord.week$points[,2])
+#ord.week.data<- data.frame(MDS1 = ord.week$points[,1], MDS2 = ord.week$points[,2])
 #so, MetaMDS assumes the x axis of our matrix is species and y is sites. We are
 #screwing with this by instead looking at sites over samples for one species. So when I call "sites"
 #here I'm actually calling sampling times. Just thought you should know
-ordfit.week<-envfit(ord.week~as.factor(year)+week+precip+ddacc, data=env.landscape.week, perm=1000)
-summary(ordfit.week)
-ordfit.week
-ordfit.week.data<-as.data.frame(ordfit.week$vectors$arrows*sqrt(ordfit.week$vectors$r))
-ordfit.week.data$species<-rownames(ordfit.week.data)
+#ordfit.week<-envfit(ord.week~as.factor(year)+week+precip+ddacc, data=env.landscape.week, perm=1000)
+#summary(ordfit.week)
+#ordfit.week
+#ordfit.week.data<-as.data.frame(ordfit.week$vectors$arrows*sqrt(ordfit.week$vectors$r))
+#ordfit.week.data$species<-rownames(ordfit.week.data)
 
 #lets's make this go! https://oliviarata.wordpress.com/2014/04/17/ordinations-in-ggplot2/ is tutorial I'm using here
 
@@ -680,5 +725,19 @@ for (i in 1:length(peaks$year)){
 #put it into our peak object
 peaks$week<-weeks
 
-climate.test<-lm(peak~year+week, data=peaks)
-summary(climate.test)
+#this allows us to merge in other relevant data with our peak dataset
+peaks<-merge(peaks, captures.by.year, by=c("year"), all.x=TRUE)
+peaks$ddacc<-NULL
+peaks<-merge(peaks, weather.by.week, by=c("year", "week"), all.x=TRUE)
+
+
+ggplot(peaks, aes(precip.0, peak))+
+  geom_errorbar(aes(ymin=peak-peak.err, ymax=peak+peak.err))+
+  geom_point(aes(colour=as.factor(year)), size=5)+
+  geom_smooth(method="lm", formula=y~poly(x,2), se=FALSE)
+  
+
+peaks$precip.02<-peaks$precip.0^2
+
+env.test<-glm(peak~precip.0+precip.02, data=peaks)
+summary(env.test)
