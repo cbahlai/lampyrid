@@ -420,15 +420,32 @@ lampyrid.weather<-merge(lampyrid, weather1, by=c("year","week"), all.x=TRUE)
 
 library(ggplot2)
 
-#plot raw 
-lampyrid.doy<-ggplot(lampyrid.weather, aes(DOY, ADULTS, 
-                    color=factor(year)))+
-  geom_point()
+#create a palatte based on colour brewer. We want to use 'Spectral' for year data
+#but we have one extra year, so we have to create a palette manually
+#just extract the hex from colorbrewer, and find an additional shade that works on one of the ends
 
+pal<-c('#9e0142','#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd','#5e4fa2', '#a3297a')
+
+#plot raw 
+lampyrid.doy<-ggplot(lampyrid.weather, aes(DOY, ADULTS, fill=as.factor(year)))+
+  scale_fill_manual(values=pal)+
+  geom_point(colour="black", pch=21, size=5)+
+  theme_bw(base_size = 20)+
+  facet_wrap(~year)+
+  guides(fill=FALSE)+
+  xlab("Day")+
+  ylab("# Adults captured")
 lampyrid.doy
-lampyrid.week<-ggplot(lampyrid.weather, aes(week, ADULTS, 
-                      color=factor(year)))+
-  geom_point()
+
+#plot by sample week
+lampyrid.week<-ggplot(lampyrid.weather, aes(week, ADULTS, fill=factor(year)))+
+  scale_fill_manual(values=pal)+
+  geom_point(colour="black", pch=21, size=5)+
+  theme_bw(base_size = 20)+
+  facet_wrap(~year)+
+  guides(fill=FALSE)+
+  xlab("Week")+
+  ylab("# Adults captured")
 lampyrid.week
 
 # we're interested in looking at more general trends. We'll need to produce 
@@ -446,15 +463,30 @@ captures.by.week.year<-ddply(lampyrid.weather, c("year", "week"), summarise,
 
 #look at captures by week, over the growing season, by year
 lampyrid.summary.week<-ggplot(captures.by.week.year, aes(week, avg, 
-                                                         color=factor(year)))+
-  geom_point()+geom_smooth(se=FALSE)
+                                                         fill=as.factor(year)))+
+  scale_fill_manual(values=pal)+
+  geom_smooth(colour="black", se=FALSE)+
+  geom_point(colour="black", pch=21, size=5)+
+  theme_bw(base_size = 20)+
+  guides(fill=guide_legend(title="Year"))+
+  theme(legend.key=element_blank())+
+  xlab("\nWeek")+
+  ylab("Adults per trap\n")
+
 lampyrid.summary.week
 
-#look at captures by degree day accumulation
+#look at captures by degree day accumulation to see if our activity pattern is clearer
 
 lampyrid.summary.ddacc<-ggplot(captures.by.week.year, aes(ddacc, avg, 
-                                                          color=factor(year)))+
-  geom_point()+geom_smooth(se=FALSE)
+                                                          fill=as.factor(year)))+
+  scale_fill_manual(values=pal)+
+  geom_smooth(colour="black", se=FALSE)+
+  geom_point(colour="black", pch=21, size=5)+
+  theme_bw(base_size = 20)+
+  guides(fill=guide_legend(title="Year"))+
+  theme(legend.key=element_blank())+
+  xlab("\nDegree day accumulation")+
+  ylab("Adults per trap\n")
 lampyrid.summary.ddacc
 
 #we want to look at captures by treatment 
@@ -464,57 +496,112 @@ lampyrid.summary.ddacc
 captures.by.treatment<-ddply(lampyrid.weather, c("year", "TREAT_DESC"), summarise,
                              total=sum(ADULTS), traps=sum(TRAPS), avg=sum(ADULTS)/sum(TRAPS))
 
+# let's look at captures by treatment in the broadest sense first
+
+treatment.boxplot<-ggplot(captures.by.treatment, aes(factor(TREAT_DESC), avg))+
+  scale_fill_brewer(palette="Set3")+
+  geom_boxplot(aes(fill=factor(TREAT_DESC)), colour="black")+
+  theme_bw(base_size = 20)+
+  guides(fill=FALSE)+
+  xlab("\nTreatment")+
+  ylab("Adults per trap\n")+
+  theme(axis.text.x=element_text(angle=90))
+
+treatment.boxplot
+
+#looks to me like we are most likely to capture fireflies in annual herbaceous crops with the least soil disturbance
+#alfalfa, and no till. Hmm.
+
+
+#and now we look at captures by treatment over the years
+
 lampyrid.summary.treatment<-ggplot(captures.by.treatment, aes(year, avg, 
-                                                              color=factor(TREAT_DESC)))+
-  geom_point()+geom_smooth(se=FALSE)
+                                                              fill=as.factor(TREAT_DESC)))+
+  scale_fill_brewer(palette="Set3")+
+  geom_smooth(colour="black", se=FALSE)+
+  geom_point(colour="black", pch=21, size=5)+
+  theme_bw(base_size = 20)+
+  guides(fill=guide_legend(title="Treatment"))+
+  theme(legend.key=element_blank())+
+  xlab("\nYear")+
+  ylab("Adults per trap\n")
 lampyrid.summary.treatment
 
-
-captures.by.habitat<-ddply(lampyrid.weather, c("year", "HABITAT"), summarise,
-                           total=sum(ADULTS), traps=length(ADULTS), avg=sum(ADULTS)/length(ADULTS))
-
-lampyrid.summary.habitat<-ggplot(captures.by.habitat, aes(year, avg, 
-                                                          color=factor(HABITAT)))+
-  geom_point()+geom_smooth(se=FALSE)
-lampyrid.summary.habitat
+#an interesting population cycling pattern emerges, but it doesn't look like there's major changes of crop use
+#At least not at the yearly resolution
+#we can investigate this futher with a multivariate analysis later
+#regardless of how we plot it, we see an interesting pattern in the population variation- basically, a 6-7 year oscillation.
+#so the question is, is there and obvious environmental cause?
 
 #we want to look at captures by treatment relative to degree day accumulation too- are peaks earlier or later by crop? 
 
 captures.by.treatment.dd<-ddply(lampyrid.weather, c("year","week","TREAT_DESC"), summarise,
                              total=sum(ADULTS), traps=sum(TRAPS), avg=sum(ADULTS)/sum(TRAPS), ddacc=max(dd.accum))
 
+
+
 lampyrid.summary.treatment.dd<-ggplot(captures.by.treatment.dd, aes(ddacc, avg, 
-                                                              color=factor(TREAT_DESC)))+
-  geom_point()+geom_smooth(se=FALSE)
+                                                                    fill=as.factor(TREAT_DESC)))+
+  scale_fill_brewer(palette="Set3")+
+  geom_point(colour="black", pch=21, size=5)+
+  geom_smooth(colour="black", se=FALSE)+
+  theme_bw(base_size = 20)+
+  guides(fill=guide_legend(title="Treatment"))+
+  theme(legend.key=element_blank())+
+  xlab("\nDegree day accumulation")+
+  ylab("Adults per trap\n")
 lampyrid.summary.treatment.dd
 
-#regardless of how we plot it, we see an interesting pattern in the population variation- basically, a 6-7 year oscillation.
-#so the question is, is there and obvious environmental cause?
-#compute yearly weather summary from weather data (dont want this calulation to be affectred by length of sampling season)
+#it looks like peaks by degree day accumulation is roughly synced by crop. We'll need to quantify how crop 
+#use varies between crops but it looks like these factors do not interact with time. Good! makes our analysis
+#more strightforward
+
+#Let's see if there's anyting obvious in the weather data that explains the population cycling over time 
+#that we saw above
+
+#compute yearly weather summary from weather data (do't want this calulation to be affectred by length of sampling season)
 weather.by.year<-ddply(weather1, c("year"), summarise,
                         precip=sum(prec.accum), rain.days=sum(rain.days), ddacc=max(dd.accum))
 
 #plot degree day accumulations by year, see if that explains it
 
 ddacc.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=ddacc, fill=as.factor(year)))+
-  geom_bar(stat="identity")
+  scale_fill_manual(values=pal)+
+  geom_bar(stat="identity", colour="black")+
+  theme_bw(base_size = 20)+
+  guides(fill=FALSE)+
+  ylab("\nDegree day accumulation\n")+
+  xlab("\nYear\n")
+
 ddacc.summary.year
 
 #what about amount of precipitation? say number of rainy days
 rainday.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=rain.days, fill=as.factor(year)))+
-  geom_bar(stat="identity")
+  scale_fill_manual(values=pal)+
+  geom_bar(stat="identity", colour="black")+
+  theme_bw(base_size = 20)+
+  guides(fill=FALSE)+
+  ylab("\nNumberof rainy days\n")+
+  xlab("\nYear\n")
+
 rainday.summary.year
 
 #and total precipitation
 precip.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=precip, fill=as.factor(year)))+
-  geom_bar(stat="identity")
+  scale_fill_manual(values=pal)+
+  geom_bar(stat="identity", colour="black")+
+  theme_bw(base_size = 20)+
+  guides(fill=FALSE)+
+  ylab("\nTotal precipitation (mm)\n")+
+  xlab("\nYear\n")
 precip.summary.year
 
-plot(weather.by.year$rain.days,weather.by.year$ddacc)
+#is there a relationship between rain and degree day accumulation? 
+plot(weather.by.year$precip,weather.by.year$ddacc)
+#not much, though there are a few hot-dry and a few cold-wet years
+#I don't think we need to go down this rabbit hole for the present analysis
  
-treatment.boxplot<-ggplot(captures.by.treatment, aes(factor(TREAT_DESC), total))+
-  geom_boxplot(aes(fill=factor(TREAT_DESC)))
-treatment.boxplot
+
 
 
 #multivariate analysis. So we want to see if the habitat use patterns of the lampyrids have
