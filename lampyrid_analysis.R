@@ -424,7 +424,8 @@ library(ggplot2)
 #but we have one extra year, so we have to create a palette manually
 #just extract the hex from colorbrewer, and find an additional shade that works on one of the ends
 
-pal<-c('#9e0142','#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd','#5e4fa2', '#a3297a')
+pal<-c('#a50026','#d73027','#f46d43','#fdae61','#fee090','#ffffbf','#e0f3f8','#abd9e9','#74add1','#4575b4','#313695', '#050561')
+pal1<-c('#9e0142','#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd','#5e4fa2', '#a3297a')
 
 #plot raw 
 lampyrid.doy<-ggplot(lampyrid.weather, aes(DOY, ADULTS, fill=as.factor(year)))+
