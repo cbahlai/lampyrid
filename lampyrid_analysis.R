@@ -3,9 +3,16 @@
 lampyrid<-read.csv(file="https://ndownloader.figshare.com/files/3686040",
                    header=T)
 
+#we're going to be looking at the responses of lampyrids to environmental conditions
+#this means making some choices about when to stat counting
 #what day of the year should we start the analysis on? 
 #giving it a start day of Mar 1
 start<-60
+
+#coding the variable like this makes it easy to re-run the code with different start dates
+#to see what the effect of the start date has on our conclusions. this type of testing is 
+#often referred to as 'sensitivity analysis'- ie seeing how sensitive your conclusions are to
+#your  assumptions, guesses or starting points.
 
 #clean data
 #fix dates, make them ISO'ed
@@ -18,7 +25,9 @@ lampyrid$year<-year(lampyrid$newdate)
 #because you don't have to deal with day-of-month numbers starting over 
 #in the middle of a phenological event.
 lampyrid$DOY<-yday(lampyrid$newdate)
-#use ISO week, so we start counting on Monday, not Jan 1, COOL!
+#use ISO week, so we start counting on Monday, not Jan 1, COOL! Our sampling usually 
+#takes place Wed-Friday, so if we use week of year stating on Jan 1, there is a good chance that
+#samples taken within a sampling week would get grouped incorrectly when we go to do the analysis.
 lampyrid$week<-isoweek(lampyrid$newdate)
 
 #let's look for the data problems we found we used OpenRefine and see if
