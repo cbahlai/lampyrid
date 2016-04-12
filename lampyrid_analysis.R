@@ -734,8 +734,28 @@ lampyrid.weather$predicted<-(exp(predict(lam_model,lampyrid.weather)))
 plot(x, lampyrid.weather$predicted, ylim=c(0, 100))
 plot(x, lampyrid.weather$ADULTS, ylim=c(0, 100))
 
-test<-lm(predicted~0+ADULTS, data=lampyrid.weather)
-summary(test)
+#let's reshape these data and make a nice plot to show how well the model fits peaks
+
+model.performance<-as.data.frame(cbind(x,lampyrid.weather$predicted,lampyrid.weather$ADULTS))
+names(model.performance)[1]<-"number"
+names(model.performance)[2]<-"Predicted"
+names(model.performance)[3]<-"Observed"
+
+model.performance.1<-melt(model.performance, id="number")
+
+#now we can do a two faceted plot to show this
+
+model.plot<-ggplot(model.performance.1, aes(number, value, fill=as.factor(variable)))+
+  scale_fill_manual(values=pal)+
+  geom_point(colour="black", pch=21, size=2)+
+  theme_bw(base_size = 20)+
+  ylim(0,50)+
+  facet_wrap(~variable, ncol=1)+
+  guides(fill=FALSE)+
+  xlab("\nObservation number")+
+  ylab("# Adults captured\n")
+model.plot
+
 
 #Let's see how well the model works when we look at data with a lower resolution 
 #(to damp out a bit of sampling variability + make it comparable to our smothed plots from before)
@@ -851,5 +871,5 @@ ggplot(peaks, aes(precip.0, peak))+
 
 peaks$precip.02<-peaks$precip.0^2
 
-env.test<-lm(peak~precip.0+precip.02, data=peaks)
+env.test<-glm(peak~precip.0+precip.02, data=peaks, family="gaussian")
 summary(env.test)
