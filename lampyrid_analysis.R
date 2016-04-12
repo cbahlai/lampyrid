@@ -737,25 +737,27 @@ plot(x, lampyrid.weather$ADULTS, ylim=c(0, 100))
 test<-lm(predicted~0+ADULTS, data=lampyrid.weather)
 summary(test)
 
-#Let's see how well the model works when we look at data with a lower resolution (to damp out a bit of sampling variability)
+#Let's see how well the model works when we look at data with a lower resolution 
+#(to damp out a bit of sampling variability + make it comparable to our smothed plots from before)
 
-lampyrid.weather.summary<-ddply(lampyrid.weather, c("year", "week", "TREAT_DESC"), summarise,
+lampyrid.weather.summary<-ddply(lampyrid.weather, c("year", "week"), summarise,
                              ADULTS=sum(ADULTS), TRAPS=sum(TRAPS), predicted=sum(predicted),
                              avg=sum(ADULTS)/sum(TRAPS), avgpred=sum(predicted)/sum(TRAPS),
                              dd.accum=max(dd.accum), rain.days=max(rain.days))
 
 
-lampyrid.summary.ddacc<-ggplot(lampyrid.weather.summary, aes(dd.accum, avg, 
-                                                          color=factor(year)))+
-  geom_point()+
-  geom_smooth(se=FALSE)
-lampyrid.summary.ddacc
-
-
 lampyrid.summary.ddacc.PRED<-ggplot(lampyrid.weather.summary, aes(dd.accum, avg, 
-                                                     color=factor(year)))+
-  geom_point()+
-  geom_smooth(aes(dd.accum, avgpred), se=FALSE)
+                                                     fill=factor(year)))+
+  
+  scale_fill_manual(values=pal)+
+  geom_smooth(aes(dd.accum, avgpred), color="black", se=FALSE)+
+  geom_point(colour="black", pch=21, size=5)+
+  theme_bw(base_size = 20)+
+  guides(fill=guide_legend(title="Year"))+
+  theme(legend.key=element_blank())+
+  xlab("\nDegree day accumulation")+
+  ylab("Adults per trap\n")
+
 lampyrid.summary.ddacc.PRED
 
 #Cool! So now we want to see how the peak is varying by year, and see if there are any environmental parameters that explain it
@@ -797,7 +799,14 @@ peaks$peak.err<-sqrt((2*(dd2coef+yearcoef))^(-2) *ddcoef.err^2+
 #let's visualize this!
 
 peaks.year<-ggplot(peaks, aes(x=as.factor(year), y=peak, fill=as.factor(year)))+
-  geom_bar(stat="identity")+geom_errorbar(aes(ymin=peak-peak.err, ymax=peak+peak.err))
+  scale_fill_manual(values=pal)+
+  geom_bar(stat="identity", colour="black")+
+  geom_errorbar(aes(ymin=peak-peak.err, ymax=peak+peak.err))+
+  theme_bw(base_size = 20)+
+  guides(fill=FALSE)+
+  ylab("\nDD at peak emergence\n")+
+  xlab("\nYear\n")
+
 peaks.year
 
 #ok, now let's figure out which week each peak occured in
@@ -829,12 +838,18 @@ peaks<-merge(peaks, weather.by.week, by=c("year", "week"), all.x=TRUE)
 
 
 ggplot(peaks, aes(precip.0, peak))+
+  scale_fill_manual(values=pal)+
+  geom_smooth(method="lm", formula=y~poly(x,2), se=FALSE, color="black")+
   geom_errorbar(aes(ymin=peak-peak.err, ymax=peak+peak.err))+
-  geom_point(aes(colour=as.factor(year)), size=5)+
-  geom_smooth(method="lm", formula=y~poly(x,2), se=FALSE)
+  geom_point(aes(fill=as.factor(year)), pch=21, color="black", size=5)+
+  theme_bw(base_size = 20)+
+  guides(fill=guide_legend(title="Year"))+
+  theme(legend.key=element_blank())+
+  xlab("\nPrecipitation accumulation (mm)")+
+  ylab("DD at peak emergence\n")
   
 
 peaks$precip.02<-peaks$precip.0^2
 
-env.test<-glm(peak~precip.0+precip.02, data=peaks)
+env.test<-lm(peak~precip.0+precip.02, data=peaks)
 summary(env.test)
