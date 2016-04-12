@@ -438,6 +438,11 @@ lampyrid.doy<-ggplot(lampyrid.weather, aes(DOY, ADULTS, fill=as.factor(year)))+
   ylab("# Adults captured")
 lampyrid.doy
 
+#save to pdf
+pdf("lampyriddoy.pdf", height=6, width=8)
+lampyrid.doy
+dev.off()
+
 #plot by sample week
 lampyrid.week<-ggplot(lampyrid.weather, aes(week, ADULTS, fill=factor(year)))+
   scale_fill_manual(values=pal)+
@@ -448,6 +453,11 @@ lampyrid.week<-ggplot(lampyrid.weather, aes(week, ADULTS, fill=factor(year)))+
   xlab("Week")+
   ylab("# Adults captured")
 lampyrid.week
+
+#save to pdf
+pdf("lampyridweek.pdf", height=6, width=8)
+lampyrid.week
+dev.off()
 
 # we're interested in looking at more general trends. We'll need to produce 
 #summary data to do this
@@ -476,6 +486,11 @@ lampyrid.summary.week<-ggplot(captures.by.week.year, aes(week, avg,
 
 lampyrid.summary.week
 
+#save to pdf
+pdf("lampyridsummaryweek.pdf", height=6, width=8)
+lampyrid.summary.week
+dev.off()
+
 #look at captures by degree day accumulation to see if our activity pattern is clearer
 
 lampyrid.summary.ddacc<-ggplot(captures.by.week.year, aes(ddacc, avg, 
@@ -488,7 +503,13 @@ lampyrid.summary.ddacc<-ggplot(captures.by.week.year, aes(ddacc, avg,
   theme(legend.key=element_blank())+
   xlab("\nDegree day accumulation")+
   ylab("Adults per trap\n")
+
 lampyrid.summary.ddacc
+
+#save to pdf
+pdf("lampyridsummaryddacc.pdf", height=6, width=8)
+lampyrid.summary.ddacc
+dev.off()
 
 #we want to look at captures by treatment 
 #when we look at it by plant community (habitat), things get a little wackier because of the three year crop rotation. 
@@ -510,6 +531,11 @@ treatment.boxplot<-ggplot(captures.by.treatment, aes(factor(TREAT_DESC), avg))+
 
 treatment.boxplot
 
+#save to pdf
+pdf("treatmentboxplot.pdf", height=6, width=8)
+treatment.boxplot
+dev.off()
+
 #looks to me like we are most likely to capture fireflies in annual herbaceous crops with the least soil disturbance
 #alfalfa, and no till. Hmm.
 
@@ -527,6 +553,11 @@ lampyrid.summary.treatment<-ggplot(captures.by.treatment, aes(year, avg,
   xlab("\nYear")+
   ylab("Adults per trap\n")
 lampyrid.summary.treatment
+
+#save to pdf
+pdf("lampyridsummarytreatment.pdf", height=6, width=8)
+lampyrid.summary.treatment
+dev.off()
 
 #an interesting population cycling pattern emerges, but it doesn't look like there's major changes of crop use
 #At least not at the yearly resolution
@@ -553,6 +584,11 @@ lampyrid.summary.treatment.dd<-ggplot(captures.by.treatment.dd, aes(ddacc, avg,
   ylab("Adults per trap\n")
 lampyrid.summary.treatment.dd
 
+#save to pdf
+pdf("lampyridsummarytreatmentdd.pdf", height=6, width=8)
+lampyrid.summary.treatment.dd
+dev.off()
+
 #it looks like peaks by degree day accumulation is roughly synced by crop. We'll need to quantify how crop 
 #use varies between crops but it looks like these factors do not interact with time. Good! makes our analysis
 #more strightforward
@@ -572,9 +608,15 @@ ddacc.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=ddacc, fill
   theme_bw(base_size = 20)+
   guides(fill=FALSE)+
   ylab("\nDegree day accumulation\n")+
-  xlab("\nYear\n")
+  xlab("\nYear\n")+
+  theme(axis.text.x=element_text(angle=90))
 
 ddacc.summary.year
+
+#save to pdf
+pdf("ddaccsummaryyear.pdf", height=6, width=8)
+ddacc.summary.year
+dev.off()
 
 #what about amount of precipitation? say number of rainy days
 rainday.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=rain.days, fill=as.factor(year)))+
@@ -583,9 +625,15 @@ rainday.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=rain.days
   theme_bw(base_size = 20)+
   guides(fill=FALSE)+
   ylab("\nNumberof rainy days\n")+
-  xlab("\nYear\n")
+  xlab("\nYear\n")+
+  theme(axis.text.x=element_text(angle=90))
 
 rainday.summary.year
+
+#save to pdf
+pdf("raindaysummaryyear.pdf", height=6, width=8)
+rainday.summary.year
+dev.off()
 
 #and total precipitation
 precip.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=precip, fill=as.factor(year)))+
@@ -594,8 +642,16 @@ precip.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=precip, fi
   theme_bw(base_size = 20)+
   guides(fill=FALSE)+
   ylab("\nTotal precipitation (mm)\n")+
-  xlab("\nYear\n")
+  xlab("\nYear\n")+
+  theme(axis.text.x=element_text(angle=90))
+
 precip.summary.year
+
+#save to pdf
+pdf("precipsummaryyear.pdf", height=6, width=8)
+precip.summary.year
+dev.off()
+
 
 #is there a relationship between rain and degree day accumulation? 
 plot(weather.by.year$precip,weather.by.year$ddacc)
@@ -756,6 +812,11 @@ model.plot<-ggplot(model.performance.1, aes(number, value, fill=as.factor(variab
   ylab("# Adults captured\n")
 model.plot
 
+#save to pdf
+pdf("modelplot.pdf", height=6, width=8)
+model.plot
+dev.off()
+
 
 #Let's see how well the model works when we look at data with a lower resolution 
 #(to damp out a bit of sampling variability + make it comparable to our smothed plots from before)
@@ -779,6 +840,13 @@ lampyrid.summary.ddacc.PRED<-ggplot(lampyrid.weather.summary, aes(dd.accum, avg,
   ylab("Adults per trap\n")
 
 lampyrid.summary.ddacc.PRED
+
+#need to stack these together with previous figures, but I'll just worry about exporting it for now
+
+#save to pdf
+pdf("modelddsmoothwithpredicted.pdf", height=6, width=8)
+lampyrid.summary.ddacc.PRED
+dev.off()
 
 #Cool! So now we want to see how the peak is varying by year, and see if there are any environmental parameters that explain it
 #we first need to extract the coefficients from the lam_model
@@ -825,9 +893,14 @@ peaks.year<-ggplot(peaks, aes(x=as.factor(year), y=peak, fill=as.factor(year)))+
   theme_bw(base_size = 20)+
   guides(fill=FALSE)+
   ylab("\nDD at peak emergence\n")+
-  xlab("\nYear\n")
-
+  xlab("\nYear\n")+
+  theme(axis.text.x=element_text(angle=90))
 peaks.year
+
+#save to pdf
+pdf("modelddpeaksbyyear.pdf", height=6, width=8)
+peaks.year
+dev.off()
 
 #ok, now let's figure out which week each peak occured in
 weeks<-c()
@@ -857,7 +930,7 @@ peaks$ddacc<-NULL
 peaks<-merge(peaks, weather.by.week, by=c("year", "week"), all.x=TRUE)
 
 
-ggplot(peaks, aes(precip.0, peak))+
+dd.vs.precip<-ggplot(peaks, aes(precip.0, peak))+
   scale_fill_manual(values=pal)+
   geom_smooth(method="lm", formula=y~poly(x,2), se=FALSE, color="black")+
   geom_errorbar(aes(ymin=peak-peak.err, ymax=peak+peak.err))+
@@ -867,7 +940,14 @@ ggplot(peaks, aes(precip.0, peak))+
   theme(legend.key=element_blank())+
   xlab("\nPrecipitation accumulation (mm)")+
   ylab("DD at peak emergence\n")
-  
+
+dd.vs.precip  
+
+#save to pdf
+pdf("modelddpeaksvsprecip.pdf", height=6, width=8)
+dd.vs.precip
+dev.off()
+
 
 peaks$precip.02<-peaks$precip.0^2
 
