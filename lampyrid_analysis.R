@@ -715,21 +715,9 @@ ord.year
 #here I'm actually calling sampling times. Just thought you should know
 
 plot(ord.year, disp='sites', type='n')
-ordihull(ord.year,groups=env.landscape.year$year,draw="polygon",col="grey90",label=T)
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2004"), col="red")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2005"), col="orange")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2006"), col="yellow")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2007"), col="green")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2008"), col="cyan")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2009"), col="blue")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2010"), col="violet")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2011"), col="purple")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2012"), col="black")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2013"), col="brown")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2014"), col="pink")
-points(ord.year, display='sites', select=which(env.landscape.year$year=="2015"), col="tan")
+with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=1.5))
 ordilabel(ord.year, display="species", cex=0.75, col="black")
-
+with(env.landscape.year, legend("right", legend = levels(as.factor(year)), bty = "n", col = "black", pch = 21, pt.bg = pal, cex=1.5))
 
 #repeat with week?
 
