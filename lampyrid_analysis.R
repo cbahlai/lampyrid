@@ -48,10 +48,14 @@ summary(lampyrid)
 summary(as.factor(lampyrid$TREAT_DESC))
 #wow, we've got some spelling errors. Let's clean that up
 
-lampyrid$TREAT_DESC<-gsub("Early succesional community", "Early successional community", lampyrid$TREAT_DESC)
-lampyrid$TREAT_DESC<-gsub("Early sucessional community", "Early successional community", lampyrid$TREAT_DESC)
+lampyrid$TREAT_DESC<-gsub("Early succesional community", "Early successional", lampyrid$TREAT_DESC)
+lampyrid$TREAT_DESC<-gsub("Early sucessional community", "Early successional", lampyrid$TREAT_DESC)
 lampyrid$TREAT_DESC<-gsub("Succesional", "Successional", lampyrid$TREAT_DESC)
 lampyrid$TREAT_DESC<-gsub("Sucessional", "Successional", lampyrid$TREAT_DESC)
+#also shorten biologically based (organic) and conventional till for plotting purposes 
+lampyrid$TREAT_DESC<-gsub("Biologically based \\(organic\\)", "Organic", lampyrid$TREAT_DESC)
+lampyrid$TREAT_DESC<-gsub("Conventional till", "Conventional", lampyrid$TREAT_DESC)
+
 #also convert this column to factor (gsub sometimes turns it into character type)
 lampyrid$TREAT_DESC<-as.factor(lampyrid$TREAT_DESC)
 summary(lampyrid$TREAT_DESC)
@@ -710,39 +714,50 @@ library(vegan)
 
 ord.year<-metaMDS(landscape.year, autotransform=TRUE)
 ord.year
+
+
+#environmental fit- are any environmental factors driving habitat use patterns? looks like rainy days
+#are the only significant factor
+
+fit.year<-envfit(ord.year~rain.days, env.landscape.year, perm=999)
+summary(fit.year)
+fit.year
+
 #so, MetaMDS assumes the x axis of our matrix is species and y is sites. We are
 #screwing with this by instead looking at sites over samples for one species. So when I call "sites"
 #here I'm actually calling sampling times. Just thought you should know
 
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
 plot(ord.year, disp='sites', type='n')
+plot(fit.year, col="red")
 with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=1.5))
 ordilabel(ord.year, display="species", cex=0.75, col="black")
-with(env.landscape.year, legend("right", legend = levels(as.factor(year)), bty = "n", col = "black", pch = 21, pt.bg = pal, cex=1.5))
+with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
+                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
+                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
+
+
+#save to pdf
+pdf("NMDShabitatuseyear.pdf", height=6, width=8)
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+plot(ord.year, disp='sites', type='n')
+plot(fit.year, col="red")
+with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=1.5))
+ordilabel(ord.year, display="species", cex=0.75, col="black")
+with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
+                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
+                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
+dev.off()
 
 #repeat with week?
 
 #ord.week<-metaMDS(landscape.week, autotransform=TRUE)
 #ord.week
-#extract data for ggplot
-#ord.week.data<- data.frame(MDS1 = ord.week$points[,1], MDS2 = ord.week$points[,2])
-#so, MetaMDS assumes the x axis of our matrix is species and y is sites. We are
-#screwing with this by instead looking at sites over samples for one species. So when I call "sites"
-#here I'm actually calling sampling times. Just thought you should know
+
 #ordfit.week<-envfit(ord.week~as.factor(year)+week+precip+ddacc, data=env.landscape.week, perm=1000)
 #summary(ordfit.week)
-#ordfit.week
-#ordfit.week.data<-as.data.frame(ordfit.week$vectors$arrows*sqrt(ordfit.week$vectors$r))
-#ordfit.week.data$species<-rownames(ordfit.week.data)
 
-#lets's make this go! https://oliviarata.wordpress.com/2014/04/17/ordinations-in-ggplot2/ is tutorial I'm using here
 
-#ggplot(ord.week.data, aes(MDS1, MDS2, color=as.factor(env.landscape.week$year)))+
-#  geom_point()+
-#  geom_segment(data=ordfit.week.data,aes(x=0,xend=NMDS1,y=0,yend=NMDS2),
-               #arrow = arrow(length = unit(0.5, "cm")),
-#               colour="grey",inherit_aes=FALSE) + 
-# geom_text(data=ordfit.week.data,aes(x=NMDS1,y=NMDS2,label=species),size=5)+
-#  coord_fixed()
 
 
 
