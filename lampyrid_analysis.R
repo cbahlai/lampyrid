@@ -729,8 +729,8 @@ fit.year
 
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
 plot(ord.year, disp='sites', type='n')
-plot(fit.year, col="red")
 with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=1.5))
+plot(fit.year, col="red")
 ordilabel(ord.year, display="species", cex=0.75, col="black")
 with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
                                 bty = "n", col = "black", pch = 21, pt.bg = pal, 
@@ -741,25 +741,65 @@ with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
 pdf("NMDShabitatuseyear.pdf", height=6, width=8)
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
 plot(ord.year, disp='sites', type='n')
-plot(fit.year, col="red")
 with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=1.5))
+plot(fit.year, col="red")
 ordilabel(ord.year, display="species", cex=0.75, col="black")
 with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
                                 bty = "n", col = "black", pch = 21, pt.bg = pal, 
                                 cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
+
 dev.off()
 
 #repeat with week?
 
-#ord.week<-metaMDS(landscape.week, autotransform=TRUE)
-#ord.week
+ord.week<-metaMDS(landscape.week, autotransform=TRUE)
+ord.week
 
-#ordfit.week<-envfit(ord.week~as.factor(year)+week+precip+ddacc, data=env.landscape.week, perm=1000)
-#summary(ordfit.week)
+#week and degree day accumulation are the only factors significantly associated with habitat use at the weekly resolution
+fit.week<-envfit(ord.week~week+ddacc, data=env.landscape.week, perm=999)
+summary(fit.week)
+fit.week
 
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+plot(ord.week, disp='sites', type='n')
+with(env.landscape.week, points(ord.week, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=0.8))
+plot(fit.week, col="red")
+ordilabel(ord.week, display="species", cex=0.75, col="black")
+with(env.landscape.week, legend("right", legend = levels(as.factor(year)),
+                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
+                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
 
+#save to pdf
+pdf("NMDShabitatuseweek.pdf", height=6, width=8)
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+plot(ord.week, disp='sites', type='n')
+with(env.landscape.week, points(ord.week, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=0.8))
+plot(fit.week, col="red")
+ordilabel(ord.week, display="species", cex=0.75, col="black")
+with(env.landscape.week, legend("right", legend = levels(as.factor(year)),
+                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
+                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
+dev.off()
 
+#plot two plots together 
+pdf("NMDShabitatuseAB.pdf", height=8, width=8)
+par(mfrow=c(2,1), mar=c(4.1, 4.8, 1.5, 8.1),xpd=TRUE) 
 
+plot(ord.year, disp='sites', type='n')
+with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=0.8))
+plot(fit.year, col="red")
+ordilabel(ord.year, display="species", cex=0.75, col="black")
+with(env.landscape.year, legend("topright", legend = levels(as.factor(year)),
+                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
+                                cex=1, pt.cex=1, inset=c(-0.2, 0), title="Year"))
+text(-0.8,0.25, "A", cex=2)
+
+plot(ord.week, disp='sites', type='n')
+with(env.landscape.week, points(ord.week, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=0.8))
+plot(fit.week, col="red")
+ordilabel(ord.week, display="species", cex=0.75, col="black")
+text(-2.33,1.1, "B", cex=2)
+dev.off()
 
 #finally, let's do some generalized linear modelling to see what's important and if we can explain what's going on
 #we've clearly got a quadratic resonse to degree day accumulation, and since we're dealing with count data, we should model 
