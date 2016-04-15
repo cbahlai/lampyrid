@@ -904,8 +904,6 @@ lampyrid.summary.ddacc.PRED<-ggplot(lampyrid.weather.summary, aes(dd.accum, avg,
 
 lampyrid.summary.ddacc.PRED
 
-#need to stack these together with previous figures, but I'll just worry about exporting it for now
-
 #save to pdf
 pdf("modelddsmoothwithpredicted.pdf", height=6, width=8)
 lampyrid.summary.ddacc.PRED
