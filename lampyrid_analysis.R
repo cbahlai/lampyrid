@@ -434,7 +434,7 @@ pal1<-c('#9e0142','#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#
 #plot raw 
 lampyrid.doy<-ggplot(lampyrid.weather, aes(DOY, ADULTS, fill=as.factor(year)))+
   scale_fill_manual(values=pal)+
-  geom_point(colour="black", pch=21, size=5)+
+  geom_point(colour="black", pch=21, size=4)+
   theme_bw(base_size = 20)+
   facet_wrap(~year)+
   guides(fill=FALSE)+
@@ -450,7 +450,7 @@ dev.off()
 #plot by sample week
 lampyrid.week<-ggplot(lampyrid.weather, aes(week, ADULTS, fill=factor(year)))+
   scale_fill_manual(values=pal)+
-  geom_point(colour="black", pch=21, size=5)+
+  geom_point(colour="black", pch=21, size=4)+
   theme_bw(base_size = 20)+
   facet_wrap(~year)+
   guides(fill=FALSE)+
@@ -481,7 +481,7 @@ lampyrid.summary.week<-ggplot(captures.by.week.year, aes(week, avg,
                                                          fill=as.factor(year)))+
   scale_fill_manual(values=pal)+
   geom_smooth(colour="black", se=FALSE)+
-  geom_point(colour="black", pch=21, size=5)+
+  geom_point(colour="black", pch=21, size=4)+
   theme_bw(base_size = 20)+
   guides(fill=guide_legend(title="Year"))+
   theme(legend.key=element_blank())+
@@ -501,7 +501,7 @@ lampyrid.summary.ddacc<-ggplot(captures.by.week.year, aes(ddacc, avg,
                                                           fill=as.factor(year)))+
   scale_fill_manual(values=pal)+
   geom_smooth(colour="black", se=FALSE)+
-  geom_point(colour="black", pch=21, size=5)+
+  geom_point(colour="black", pch=21, size=4)+
   theme_bw(base_size = 20)+
   guides(fill=guide_legend(title="Year"))+
   theme(legend.key=element_blank())+
@@ -514,6 +514,26 @@ lampyrid.summary.ddacc
 pdf("lampyridsummaryddacc.pdf", height=6, width=8)
 lampyrid.summary.ddacc
 dev.off()
+
+#we want to stack these figures together because they are a driect comparison of the predictivity of these two factors
+#since this is a ggplot, we'll need to use arrangegrob. we can alter the panels before feeding them to arrangegrob
+#to remove redundant information and to add labels
+library(gridExtra)
+
+
+#remove legend from panel A, add label
+lampyrid.summary.week1<-lampyrid.summary.week+guides(fill=FALSE)+annotate("text", x=20, y=4.2, label="A", size=14)
+#remove Y axis title from panel B, add label
+lampyrid.summary.ddacc1<-lampyrid.summary.ddacc+ylab(NULL)+annotate("text", x=255, y=4.2, label="B", size=14)
+#stack it together
+grid.arrange(arrangeGrob(lampyrid.summary.week1, lampyrid.summary.ddacc1, ncol=2, widths=c(0.49, 0.55)))
+
+
+#save to pdf
+pdf("lampyridsummaryweekandddacc.pdf", height=6, width=10)
+grid.arrange(arrangeGrob(lampyrid.summary.week1, lampyrid.summary.ddacc1, ncol=2, widths=c(0.49, 0.55)))
+dev.off()
+
 
 #we want to look at captures by treatment 
 #when we look at it by plant community (habitat), things get a little wackier because of the three year crop rotation. 
@@ -550,7 +570,7 @@ lampyrid.summary.treatment<-ggplot(captures.by.treatment, aes(year, avg,
                                                               fill=as.factor(TREAT_DESC)))+
   scale_fill_brewer(palette="Set3")+
   geom_smooth(colour="black", se=FALSE)+
-  geom_point(colour="black", pch=21, size=5)+
+  geom_point(colour="black", pch=21, size=4)+
   theme_bw(base_size = 20)+
   guides(fill=guide_legend(title="Treatment"))+
   theme(legend.key=element_blank())+
@@ -579,7 +599,7 @@ captures.by.treatment.dd<-ddply(lampyrid.weather, c("year","week","TREAT_DESC"),
 lampyrid.summary.treatment.dd<-ggplot(captures.by.treatment.dd, aes(ddacc, avg, 
                                                                     fill=as.factor(TREAT_DESC)))+
   scale_fill_brewer(palette="Set3")+
-  geom_point(colour="black", pch=21, size=5)+
+  geom_point(colour="black", pch=21, size=4)+
   geom_smooth(colour="black", se=FALSE)+
   theme_bw(base_size = 20)+
   guides(fill=guide_legend(title="Treatment"))+
@@ -875,7 +895,7 @@ lampyrid.summary.ddacc.PRED<-ggplot(lampyrid.weather.summary, aes(dd.accum, avg,
   
   scale_fill_manual(values=pal)+
   geom_smooth(aes(dd.accum, avgpred), color="black", se=FALSE)+
-  geom_point(colour="black", pch=21, size=5)+
+  geom_point(colour="black", pch=21, size=4)+
   theme_bw(base_size = 20)+
   guides(fill=guide_legend(title="Year"))+
   theme(legend.key=element_blank())+
@@ -977,7 +997,7 @@ dd.vs.precip<-ggplot(peaks, aes(precip.0, peak))+
   scale_fill_manual(values=pal)+
   geom_smooth(method="lm", formula=y~poly(x,2), se=FALSE, color="black")+
   geom_errorbar(aes(ymin=peak-peak.err, ymax=peak+peak.err))+
-  geom_point(aes(fill=as.factor(year)), pch=21, color="black", size=5)+
+  geom_point(aes(fill=as.factor(year)), pch=21, color="black", size=4)+
   theme_bw(base_size = 20)+
   guides(fill=guide_legend(title="Year"))+
   theme(legend.key=element_blank())+
