@@ -10,3 +10,6 @@ Link to the (read-only) version of the overleaf manuscript: https://www.overleaf
 
 Citation Managment Link:
 Link to the group Zotero: https://www.zotero.org/groups/firefly
+
+Link to the Dataset:
+https://figshare.com/articles/LTER_Lampyrid_data/2068098
