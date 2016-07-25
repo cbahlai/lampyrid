@@ -181,6 +181,7 @@ plot(weather$air_temp_min, weather$air_temp_min_clean)
 
 
 # calculate the degree day accumulation for the first half of the day dd1,
+#then add it to dd2
 #assuming a sine wave structure of temperature over the day
 #use a development threshold of 10C, well, because it's a nice number
 #to work with
@@ -278,7 +279,6 @@ weather$dd<-allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10)
 plot(weather$DOY, weather$dd)
 
 #now write a new function to calculate accumulated degree days
-
 
 accum.allen<-function(maxi, mini, thresh, DOY, startday){
   #if startday is not given, assume it's day 1
@@ -522,11 +522,9 @@ library(gridExtra)
 
 
 #remove legend from panel A, add label
-lampyrid.summary.week1<-lampyrid.summary.week+guides(fill=FALSE)+
-  annotate("text", x=20, y=4.2, label="A", size=14)
+lampyrid.summary.week1<-lampyrid.summary.week+guides(fill=FALSE)+annotate("text", x=20, y=4.2, label="A", size=14)
 #remove Y axis title from panel B, add label
-lampyrid.summary.ddacc1<-lampyrid.summary.ddacc+ylab(NULL)+
-  annotate("text", x=255, y=4.2, label="B", size=14)
+lampyrid.summary.ddacc1<-lampyrid.summary.ddacc+ylab(NULL)+annotate("text", x=255, y=4.2, label="B", size=14)
 #stack it together
 grid.arrange(arrangeGrob(lampyrid.summary.week1, lampyrid.summary.ddacc1, ncol=2, widths=c(0.49, 0.55)))
 
@@ -639,10 +637,6 @@ ddacc.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=ddacc, fill
 
 ddacc.summary.year
 
-#save to pdf
-pdf("ddaccsummaryyear.pdf", height=6, width=8)
-ddacc.summary.year
-dev.off()
 
 #what about amount of precipitation? say number of rainy days
 rainday.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=rain.days, fill=as.factor(year)))+
@@ -656,10 +650,6 @@ rainday.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=rain.days
 
 rainday.summary.year
 
-#save to pdf
-pdf("raindaysummaryyear.pdf", height=6, width=8)
-rainday.summary.year
-dev.off()
 
 #and total precipitation
 precip.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=precip, fill=as.factor(year)))+
@@ -673,11 +663,6 @@ precip.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=precip, fi
 
 precip.summary.year
 
-#save to pdf
-pdf("precipsummaryyear.pdf", height=6, width=8)
-precip.summary.year
-dev.off()
-
 
 #is there a relationship between rain and degree day accumulation? 
 plot(weather.by.year$precip,weather.by.year$ddacc)
@@ -687,352 +672,8 @@ plot(weather.by.year$precip,weather.by.year$ddacc)
 
 
 
-#multivariate analysis. So we want to see if the habitat use patterns of the lampyrids have
-#changed, both within season and through the years
-#to do this, we'll need to reshape the data into two different matrices where we have 
-#abundance of fireflies by TREAT_DESC at yearly and weekly resolutions- a cros-tab,
-#wide format data. 
 
-#start by building the matrices
-#we can use our previously melted data fram 'lampyrid1' and cast it as needed
-#because of unequal numbers of reps between forest and main sites, but same number of subsamples 
-#per rep, we'll treat subsamples as rep for this analysis and pool by rep instead
 
-#cast at the yearly resolution first
-landscape.year<-dcast(lampyrid1, year+STATION~TREAT_DESC, sum)
-landscape.week<-dcast(lampyrid1, year+week+STATION~TREAT_DESC, sum)
 
-#there are some weeks where zero fireflies were captured. We need to remove these 
-#weeks from the matrix before we can continue-
 
-landscape.week$sums<-rowSums(landscape.week[4:13])
-landscape.week<-landscape.week[which(landscape.week$sums>0),]
-landscape.week$sums<-NULL
 
-#now we need to create 'environmental' matricies- corresponding environmental 
-#variables that may offer explanations about what is going on when we run our 
-#multivariate analysis
-#we already computed 'weather.by.year' but will need to also compute the same for 
-#our weekly analysis
-weather.by.week<-ddply(weather1, c("year", "week"), summarise,
-                       precip=max(prec.accum), rain.days=sum(rain.days), ddacc=max(dd.accum), precip.0=max(prec.accum.0))
-
-#now create the environmental matrix, preserving order from the community matricies by
-#creating them from the community matrix
-
-env.landscape.year<-landscape.year[,1:2]
-env.landscape.week<-landscape.week[,1:3]
-
-#we now need to pull our weather summary data into these matrices
-env.landscape.year<-merge(env.landscape.year, weather.by.year, by=c("year"), all.x=TRUE)
-env.landscape.week<-merge(env.landscape.week, weather.by.week, by=c("year", "week"), all.x=TRUE)
-
-#finally strip out the env data
-landscape.year<-landscape.year[,3:12]
-landscape.week<-landscape.week[,4:13]
-
-#Ok! data is ready for some NMDSing! WOOO
-library(vegan)
-
-ord.year<-metaMDS(landscape.year, autotransform=TRUE)
-ord.year
-
-
-#environmental fit- are any environmental factors driving habitat use patterns? looks like rainy days
-#are the only significant factor
-
-fit.year<-envfit(ord.year~rain.days, env.landscape.year, perm=999)
-summary(fit.year)
-fit.year
-
-#so, MetaMDS assumes the x axis of our matrix is species and y is sites. We are
-#screwing with this by instead looking at sites over samples for one species. So when I call "sites"
-#here I'm actually calling sampling times. Just thought you should know
-
-par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-plot(ord.year, disp='sites', type='n')
-with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=1.5))
-plot(fit.year, col="red")
-ordilabel(ord.year, display="species", cex=0.75, col="black")
-with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
-                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
-                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
-
-
-#save to pdf
-pdf("NMDShabitatuseyear.pdf", height=6, width=8)
-par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-plot(ord.year, disp='sites', type='n')
-with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=1.5))
-plot(fit.year, col="red")
-ordilabel(ord.year, display="species", cex=0.75, col="black")
-with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
-                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
-                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
-
-dev.off()
-
-#repeat with week?
-
-ord.week<-metaMDS(landscape.week, autotransform=TRUE)
-ord.week
-
-#week and degree day accumulation are the only factors significantly associated with habitat use at the weekly resolution
-fit.week<-envfit(ord.week~week+ddacc, data=env.landscape.week, perm=999)
-summary(fit.week)
-fit.week
-
-par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-plot(ord.week, disp='sites', type='n')
-with(env.landscape.week, points(ord.week, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=0.8))
-plot(fit.week, col="red")
-ordilabel(ord.week, display="species", cex=0.75, col="black")
-with(env.landscape.week, legend("right", legend = levels(as.factor(year)),
-                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
-                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
-
-#save to pdf
-pdf("NMDShabitatuseweek.pdf", height=6, width=8)
-par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-plot(ord.week, disp='sites', type='n')
-with(env.landscape.week, points(ord.week, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=0.8))
-plot(fit.week, col="red")
-ordilabel(ord.week, display="species", cex=0.75, col="black")
-with(env.landscape.week, legend("right", legend = levels(as.factor(year)),
-                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
-                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
-dev.off()
-
-#plot two plots together 
-pdf("NMDShabitatuseAB.pdf", height=8, width=8)
-par(mfrow=c(2,1), mar=c(4.1, 4.8, 1.5, 8.1),xpd=TRUE) 
-
-plot(ord.year, disp='sites', type='n')
-with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=0.8))
-plot(fit.year, col="red")
-ordilabel(ord.year, display="species", cex=0.75, col="black")
-with(env.landscape.year, legend("topright", legend = levels(as.factor(year)),
-                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
-                                cex=1, pt.cex=1, inset=c(-0.2, 0), title="Year"))
-text(-0.8,0.25, "A", cex=2)
-
-plot(ord.week, disp='sites', type='n')
-with(env.landscape.week, points(ord.week, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=0.8))
-plot(fit.week, col="red")
-ordilabel(ord.week, display="species", cex=0.75, col="black")
-text(-2.33,1.1, "B", cex=2)
-dev.off()
-
-#finally, let's do some generalized linear modelling to see what's important and if we can explain what's going on
-#we've clearly got a quadratic resonse to degree day accumulation, and since we're dealing with count data, we should model 
-#it using a poisson structure (or negative binomial if we've got a high residual deviance)
-#we'll use the MASS package
-
-library(MASS)
-#create a squared term so we can build a model with a quadratic in it
-lampyrid.weather$dd.accum2<-(lampyrid.weather$dd.accum)^2
-
-
-
-
-#After some initial fiddling, we find out that rain.days is a better predictor than precipitation accumulation, and given that these are 
-#seriously autocorrelated, let's just use rain days
-#we know TREAT_DESC is probably not important in interacting with dd.acc as we did not observe major tends by treatment when we looked at 
-#trends in captures by degree day accumulation by  treatment so we won't look for interactions
-#finally, because of convergence problems using glm.nb, we determined theta (dispersion parameter) iteratively
-#using glm with a negative binomial family instead. Less elegant and more labour intensive- but really brought residual deviance and AIC
-#values down, indicating a much better fit
-
-lam_model<-glm(ADULTS~dd.accum+dd.accum2*(as.factor(year))+TREAT_DESC, 
-               offset=TRAPS, data=lampyrid.weather, family=negative.binomial(0.6))
-summary(lam_model)
-
-
-#Let's just do a quick look to see how our model predictions look
-x<-(1:length(lampyrid.weather$DOY))
-lampyrid.weather$predicted<-(exp(predict(lam_model,lampyrid.weather)))
-
-plot(x, lampyrid.weather$predicted, ylim=c(0, 100))
-plot(x, lampyrid.weather$ADULTS, ylim=c(0, 100))
-
-#let's reshape these data and make a nice plot to show how well the model fits peaks
-
-model.performance<-as.data.frame(cbind(x,lampyrid.weather$predicted,lampyrid.weather$ADULTS))
-names(model.performance)[1]<-"number"
-names(model.performance)[2]<-"Predicted"
-names(model.performance)[3]<-"Observed"
-
-model.performance.1<-melt(model.performance, id="number")
-
-#now we can do a two faceted plot to show this
-
-model.plot<-ggplot(model.performance.1, aes(number, value, fill=as.factor(variable)))+
-  scale_fill_manual(values=pal)+
-  geom_point(colour="black", pch=21, size=2)+
-  theme_bw(base_size = 20)+
-  ylim(0,50)+
-  facet_wrap(~variable, ncol=1)+
-  guides(fill=FALSE)+
-  xlab("\nObservation number")+
-  ylab("# Adults captured\n")
-model.plot
-
-#save to pdf
-pdf("modelplot.pdf", height=6, width=8)
-model.plot
-dev.off()
-
-
-#Let's see how well the model works when we look at data with a lower resolution 
-#(to damp out a bit of sampling variability + make it comparable to our smothed plots from before)
-
-lampyrid.weather.summary<-ddply(lampyrid.weather, c("year", "week"), summarise,
-                             ADULTS=sum(ADULTS), TRAPS=sum(TRAPS), predicted=sum(predicted),
-                             avg=sum(ADULTS)/sum(TRAPS), avgpred=sum(predicted)/sum(TRAPS),
-                             dd.accum=max(dd.accum), rain.days=max(rain.days))
-
-
-lampyrid.summary.ddacc.PRED<-ggplot(lampyrid.weather.summary, aes(dd.accum, avg, 
-                                                     fill=factor(year)))+
-  
-  scale_fill_manual(values=pal)+
-  geom_smooth(aes(dd.accum, avgpred), color="black", se=FALSE)+
-  geom_point(colour="black", pch=21, size=4)+
-  theme_bw(base_size = 20)+
-  guides(fill=guide_legend(title="Year"))+
-  theme(legend.key=element_blank())+
-  xlab("\nDegree day accumulation")+
-  ylab("Adults per trap\n")
-
-lampyrid.summary.ddacc.PRED
-
-#save to pdf
-pdf("modelddsmoothwithpredicted.pdf", height=6, width=8)
-lampyrid.summary.ddacc.PRED
-dev.off()
-
-#Cool! So now we want to see how the peak is varying by year, and see if there are any environmental parameters that explain it
-#we first need to extract the coefficients from the lam_model
-
-coef<-as.data.frame(summary(lam_model)$coefficients)
-#get rid of those pesky t and P statistics
-coef<-coef[,1:2]
-
-
-
-ddcoef<-coef$Estimate[2]
-dd2coef<-coef$Estimate[3]
-ddcoef.err<-coef$"Std. Error"[2]
-dd2coef.err<-coef$"Std. Error"[3]
-
-#create a vector of years
-year<-(2004:2015)
-
-#create vector of coefficients
-#remember 2004 is the 'intercept' vector so it's unmodified, we'll give it a year 
-#modifier and error of zero
-
-yearcoef<-c(0, coef$Estimate[24:34])
-yearcoef.err<-c(0, coef$"Std. Error"[24:34])
-
-#create a new data frame to integrate the coeficients with the year vector
-peaks<-as.data.frame(cbind(year, yearcoef, yearcoef.err))
-
-#peak will occur at -ddcoeficient/(2(dd2coeficient+year coeficient))
-peaks$peak<- -ddcoef/(2*(dd2coef+yearcoef))
-
-#peak error calculated using the general error propagation formula
-#this will be a bit inelegant, but I calculated the partial derrivatives 
-#relative to each variable myself!
-peaks$peak.err<-sqrt((2*(dd2coef+yearcoef))^(-2) *ddcoef.err^2+
-                       (ddcoef/(2*(dd2coef+yearcoef))^2)^2*(dd2coef.err^2+yearcoef.err^2))
-
-#let's visualize this!
-
-peaks.year<-ggplot(peaks, aes(x=as.factor(year), y=peak, fill=as.factor(year)))+
-  scale_fill_manual(values=pal)+
-  geom_bar(stat="identity", colour="black")+
-  geom_errorbar(aes(ymin=peak-peak.err, ymax=peak+peak.err))+
-  theme_bw(base_size = 20)+
-  guides(fill=FALSE)+
-  ylab("\nDD at peak emergence\n")+
-  xlab("\nYear\n")+
-  theme(axis.text.x=element_text(angle=90))
-peaks.year
-
-#save to pdf
-pdf("modelddpeaksbyyear.pdf", height=6, width=8)
-peaks.year
-dev.off()
-
-#ok, now let's figure out which week each peak occured in
-weeks<-c()
-for (i in 1:length(peaks$year)){
-  #set an arbitrariliy high 'last week' dd caccumulation so the first condition is never
-  #met in the first iteration for each year
-  ddlastweek<-10000
-    for(j in 1:length(weather.by.week$year)){
-      if ((peaks$year[i]==weather.by.week$year[j])&
-          (peaks$peak[i]>ddlastweek)&
-          (peaks$peak[i]<weather.by.week$ddacc[j])){
-        week<-weather.by.week$week[j]
-        weeks<-c(weeks, week)
-        break
-      }
-      else{
-        ddlastweek<-weather.by.week$ddacc[j]
-      }
-    }
-}
-#put it into our peak object
-peaks$week<-weeks
-
-#this allows us to merge in other relevant data with our peak dataset
-peaks<-merge(peaks, captures.by.year, by=c("year"), all.x=TRUE)
-peaks$ddacc<-NULL
-peaks<-merge(peaks, weather.by.week, by=c("year", "week"), all.x=TRUE)
-
-
-dd.vs.precip<-ggplot(peaks, aes(precip.0, peak))+
-  scale_fill_manual(values=pal)+
-  geom_smooth(method="lm", formula=y~poly(x,2), se=FALSE, color="black")+
-  geom_errorbar(aes(ymin=peak-peak.err, ymax=peak+peak.err))+
-  geom_point(aes(fill=as.factor(year)), pch=21, color="black", size=4)+
-  theme_bw(base_size = 20)+
-  guides(fill=guide_legend(title="Year"))+
-  theme(legend.key=element_blank())+
-  xlab("\nPrecipitation accumulation (mm)")+
-  ylab("DD at peak emergence\n")
-
-dd.vs.precip  
-
-#save to pdf
-pdf("modelddpeaksvsprecip.pdf", height=6, width=8)
-dd.vs.precip
-dev.off()
-
-
-peaks$precip.02<-peaks$precip.0^2
-
-env.test<-glm(peak~precip.0+precip.02, data=peaks, family="gaussian")
-summary(env.test)
-
-
-#create figure for LTER annual report
-#need lampyrid.summary.ddac as panel A and
-#dd.vs.precip as panel B
-
-#add label to panel A, remove legend
-lampyrid.summary.ddacc2<-lampyrid.summary.ddacc+guides(fill=FALSE)+
-  annotate("text", x=75, y=4.2, label="A", size=12)
-#remove Y axis title from panel B, add label, and remove legend
-dd.vs.precip2<-dd.vs.precip+ylim(650,1000)+
-  annotate("text", x=255, y=987, label="B", size=12)
-#stack it together
-grid.arrange(arrangeGrob(lampyrid.summary.ddacc2, dd.vs.precip2, ncol=2, widths=c(0.45,0.55)))
-
-
-#save to pdf
-pdf("annualreport2016.pdf", height=5, width=12)
-grid.arrange(arrangeGrob(lampyrid.summary.ddacc2, dd.vs.precip2, ncol=2, widths=c(0.45,0.55)))
-dev.off()
