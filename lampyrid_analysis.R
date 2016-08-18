@@ -110,7 +110,7 @@ plot(weather$DOY, weather$air_temp_mean)
 plot(weather$DOY, weather$precipitation)
 
 #because we don't have lampyrid records before 2004, let's cut out the data
-#from before 2003 so we can process the weaqther data more quickly. Also our
+#from before 2003 so we can process the weather data more quickly. Also our
 #lampyrid data stops at the end of 2015 and for some reason the new
 #weather station data breaks our code. DANGIT. so we'll cut off the weather
 #data that's causing us problems- we don't need it anyway
@@ -144,7 +144,7 @@ replace.missing<-function(vec){
     if (is.na(vec[i])){
       vec[i]<-vec[i-1]
       #if the data is missing, sub in the value from the measurement before
-
+      
     } else{
       #if the value is not missing, just pass it through to the result vector
       vec[i]<-vec[i]
@@ -196,8 +196,8 @@ allen<-function(maxi, mini, thresh){
   }
   dd1<-c()
   dd2<-c()
-    for (i in 1:length(maxi)){
-     if (maxi[i]>= thresh & mini[i]<thresh) {
+  for (i in 1:length(maxi)){
+    if (maxi[i]>= thresh & mini[i]<thresh) {
       #first half of day
       #amplitude of temperature difference
       alpha1<-(maxi[i]-mini[i])/2
@@ -230,36 +230,36 @@ allen<-function(maxi, mini, thresh){
         dd2<-c(dd2, dd2.T)
       }
       
-     } else if (mini[i]>=thresh){
-       #first half of day
-       avg1<-(maxi[i]+mini[i])/2
-       dd1.T<-(avg1-thresh)/2
-       dd1<-c(dd1, dd1.T)
-       #second half of day, as above, two possible cases
-       if (mini[i+1]>=thresh){
-         avg2<-(maxi[i]+mini[i+1])/2
-         dd2.T<-(avg2-thresh)/2
-         dd2<-c(dd2, dd2.T)
-       } else{
-         #amplitude of temperature difference
-         alpha2<-(maxi[i]-mini[i+1])/2
-         #average temperature
-         avg2<-(maxi[i]+mini[i+1])/2
-         #theta is time point when temperatur crosses the threshold
-         #assuming temperature is roughly following the sine curve
-         theta2<-asin((thresh-avg2)/alpha2)
-         #use these to calculate degree day accumulation over first half of day
-         dd2.T<-(1/(2*pi))*((avg2-thresh)*(pi/2 - theta2)+alpha2*cos(theta2))
-         dd2<-c(dd2, dd2.T)
-       }
-       
+    } else if (mini[i]>=thresh){
+      #first half of day
+      avg1<-(maxi[i]+mini[i])/2
+      dd1.T<-(avg1-thresh)/2
+      dd1<-c(dd1, dd1.T)
+      #second half of day, as above, two possible cases
+      if (mini[i+1]>=thresh){
+        avg2<-(maxi[i]+mini[i+1])/2
+        dd2.T<-(avg2-thresh)/2
+        dd2<-c(dd2, dd2.T)
+      } else{
+        #amplitude of temperature difference
+        alpha2<-(maxi[i]-mini[i+1])/2
+        #average temperature
+        avg2<-(maxi[i]+mini[i+1])/2
+        #theta is time point when temperatur crosses the threshold
+        #assuming temperature is roughly following the sine curve
+        theta2<-asin((thresh-avg2)/alpha2)
+        #use these to calculate degree day accumulation over first half of day
+        dd2.T<-(1/(2*pi))*((avg2-thresh)*(pi/2 - theta2)+alpha2*cos(theta2))
+        dd2<-c(dd2, dd2.T)
+      }
+      
     }
-      else  {
-        #if temperature doesn't get over threshold, no degree days accumulated
-        #first half of day
-        dd1<-c(dd1, 0)
-        #second half of day
-        dd2<-c(dd2, 0)
+    else  {
+      #if temperature doesn't get over threshold, no degree days accumulated
+      #first half of day
+      dd1<-c(dd1, 0)
+      #second half of day
+      dd2<-c(dd2, 0)
     }
     #total accumulation over the day is just first half of day plus second
     
@@ -308,11 +308,12 @@ accum.allen<-function(maxi, mini, thresh, DOY, startday){
   }
   return (dd.accum)
 }
- 
+
 #same sort of checks. Run the function for our data
 
 weather$dd.accum<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_clean, 10, weather$DOY, start)
- #and plot that thing to look for problems:
+#(im gettting a comparison (3) is possible only for atomic and list types)
+#and plot that thing to look for problems:
 plot(weather$DOY, weather$dd.accum)
 #looks good! victory!!!
 
@@ -327,19 +328,19 @@ weather$dd.accum0<-accum.allen(weather$air_temp_max_clean, weather$air_temp_min_
 #days in a week
 
 accum.precip<-function (precip, week){
-    precip.acc<-c()
-    counter<-week[1]
-    accumulation<-0
-    for (i in 1:length(precip)){
-      if(week[i]==counter){
-        accumulation<-accumulation + precip[i]
-      }else{
-        counter<-week[i]
-        accumulation<-precip[i]
-      }
-      precip.acc<-c(precip.acc, accumulation)
+  precip.acc<-c()
+  counter<-week[1]
+  accumulation<-0
+  for (i in 1:length(precip)){
+    if(week[i]==counter){
+      accumulation<-accumulation + precip[i]
+    }else{
+      counter<-week[i]
+      accumulation<-precip[i]
     }
-    return(precip.acc)
+    precip.acc<-c(precip.acc, accumulation)
+  }
+  return(precip.acc)
 }
 
 #run the precipitation accumulation function
@@ -410,8 +411,8 @@ library(plyr)
 
 weather1<-ddply(weather, c("year", "week"), summarise,
                 Tmax=max(air_temp_max_clean), Tmin=min(air_temp_min_clean), 
-                dd.accum=max(dd.accum), prec.accum=max(prec.accum), 
-                rain.days=sum(rain.days), prec.accum.0=max(prec.accum.0))
+                dd.accum=max(dd.accum0), prec.accum=max(prec.accum), 
+                rain.days=sum(rain.days), prec.accum.0=max(prec.accum))
 
 
 #so, now we have two datasets that both have information we need in them.
@@ -594,7 +595,7 @@ dev.off()
 #we want to look at captures by treatment relative to degree day accumulation too- are peaks earlier or later by crop? 
 
 captures.by.treatment.dd<-ddply(lampyrid.weather, c("year","week","TREAT_DESC"), summarise,
-                             total=sum(ADULTS), traps=sum(TRAPS), avg=sum(ADULTS)/sum(TRAPS), ddacc=max(dd.accum))
+                                total=sum(ADULTS), traps=sum(TRAPS), avg=sum(ADULTS)/sum(TRAPS), ddacc=max(dd.accum))
 
 
 
@@ -624,7 +625,7 @@ dev.off()
 
 #compute yearly weather summary from weather data (do't want this calulation to be affectred by length of sampling season)
 weather.by.year<-ddply(weather1, c("year"), summarise,
-                        precip=sum(prec.accum), rain.days=sum(rain.days), ddacc=max(dd.accum))
+                       precip=sum(prec.accum), rain.days=sum(rain.days), ddacc=max(dd.accum))
 
 #plot degree day accumulations by year, see if that explains it
 
@@ -683,7 +684,7 @@ dev.off()
 plot(weather.by.year$precip,weather.by.year$ddacc)
 #not much, though there are a few hot-dry and a few cold-wet years
 #I don't think we need to go down this rabbit hole for the present analysis
- 
+
 
 
 
@@ -887,13 +888,13 @@ dev.off()
 #(to damp out a bit of sampling variability + make it comparable to our smothed plots from before)
 
 lampyrid.weather.summary<-ddply(lampyrid.weather, c("year", "week"), summarise,
-                             ADULTS=sum(ADULTS), TRAPS=sum(TRAPS), predicted=sum(predicted),
-                             avg=sum(ADULTS)/sum(TRAPS), avgpred=sum(predicted)/sum(TRAPS),
-                             dd.accum=max(dd.accum), rain.days=max(rain.days))
+                                ADULTS=sum(ADULTS), TRAPS=sum(TRAPS), predicted=sum(predicted),
+                                avg=sum(ADULTS)/sum(TRAPS), avgpred=sum(predicted)/sum(TRAPS),
+                                dd.accum=max(dd.accum), rain.days=max(rain.days))
 
 
 lampyrid.summary.ddacc.PRED<-ggplot(lampyrid.weather.summary, aes(dd.accum, avg, 
-                                                     fill=factor(year)))+
+                                                                  fill=factor(year)))+
   
   scale_fill_manual(values=pal)+
   geom_smooth(aes(dd.accum, avgpred), color="black", se=FALSE)+
@@ -971,18 +972,18 @@ for (i in 1:length(peaks$year)){
   #set an arbitrariliy high 'last week' dd caccumulation so the first condition is never
   #met in the first iteration for each year
   ddlastweek<-10000
-    for(j in 1:length(weather.by.week$year)){
-      if ((peaks$year[i]==weather.by.week$year[j])&
-          (peaks$peak[i]>ddlastweek)&
-          (peaks$peak[i]<weather.by.week$ddacc[j])){
-        week<-weather.by.week$week[j]
-        weeks<-c(weeks, week)
-        break
-      }
-      else{
-        ddlastweek<-weather.by.week$ddacc[j]
-      }
+  for(j in 1:length(weather.by.week$year)){
+    if ((peaks$year[i]==weather.by.week$year[j])&
+        (peaks$peak[i]>ddlastweek)&
+        (peaks$peak[i]<weather.by.week$ddacc[j])){
+      week<-weather.by.week$week[j]
+      weeks<-c(weeks, week)
+      break
     }
+    else{
+      ddlastweek<-weather.by.week$ddacc[j]
+    }
+  }
 }
 #put it into our peak object
 peaks$week<-weeks
