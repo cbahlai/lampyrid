@@ -443,9 +443,9 @@ lampyrid.doy<-ggplot(lampyrid.weather, aes(DOY, ADULTS, fill=as.factor(year)))+
 lampyrid.doy
 
 #save to pdf
-pdf("lampyriddoy.pdf", height=6, width=8)
-lampyrid.doy
-dev.off()
+#pdf("lampyriddoy.pdf", height=6, width=8)
+#lampyrid.doy
+#dev.off()
 
 #plot by sample week
 lampyrid.week<-ggplot(lampyrid.weather, aes(week, ADULTS, fill=factor(year)))+
@@ -459,9 +459,9 @@ lampyrid.week<-ggplot(lampyrid.weather, aes(week, ADULTS, fill=factor(year)))+
 lampyrid.week
 
 #save to pdf
-pdf("lampyridweek.pdf", height=6, width=8)
-lampyrid.week
-dev.off()
+#pdf("lampyridweek.pdf", height=6, width=8)
+#lampyrid.week
+#dev.off()
 
 # we're interested in looking at more general trends. We'll need to produce 
 #summary data to do this
@@ -491,9 +491,9 @@ lampyrid.summary.week<-ggplot(captures.by.week.year, aes(week, avg,
 lampyrid.summary.week
 
 #save to pdf
-pdf("lampyridsummaryweek.pdf", height=6, width=8)
-lampyrid.summary.week
-dev.off()
+#pdf("lampyridsummaryweek.pdf", height=6, width=8)
+#lampyrid.summary.week
+#dev.off()
 
 #look at captures by degree day accumulation to see if our activity pattern is clearer
 
@@ -511,9 +511,9 @@ lampyrid.summary.ddacc<-ggplot(captures.by.week.year, aes(ddacc, avg,
 lampyrid.summary.ddacc
 
 #save to pdf
-pdf("lampyridsummaryddacc.pdf", height=6, width=8)
-lampyrid.summary.ddacc
-dev.off()
+#pdf("lampyridsummaryddacc.pdf", height=6, width=8)
+#lampyrid.summary.ddacc
+#dev.off()
 
 #we want to stack these figures together because they are a driect comparison of the predictivity of these two factors
 #since this is a ggplot, we'll need to use arrangegrob. we can alter the panels before feeding them to arrangegrob
@@ -611,9 +611,9 @@ lampyrid.summary.treatment.dd<-ggplot(captures.by.treatment.dd, aes(ddacc, avg,
 lampyrid.summary.treatment.dd
 
 #save to pdf
-pdf("lampyridsummarytreatmentdd.pdf", height=6, width=8)
-lampyrid.summary.treatment.dd
-dev.off()
+#pdf("lampyridsummarytreatmentdd.pdf", height=6, width=8)
+#lampyrid.summary.treatment.dd
+#dev.off()
 
 #it looks like peaks by degree day accumulation is roughly synced by crop. We'll need to quantify how crop 
 #use varies between crops but it looks like these factors do not interact with time. Good! makes our analysis
@@ -640,9 +640,9 @@ ddacc.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=ddacc, fill
 ddacc.summary.year
 
 #save to pdf
-pdf("ddaccsummaryyear.pdf", height=6, width=8)
-ddacc.summary.year
-dev.off()
+#pdf("ddaccsummaryyear.pdf", height=6, width=8)
+#ddacc.summary.year
+#dev.off()
 
 #what about amount of precipitation? say number of rainy days
 rainday.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=rain.days, fill=as.factor(year)))+
@@ -657,9 +657,9 @@ rainday.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=rain.days
 rainday.summary.year
 
 #save to pdf
-pdf("raindaysummaryyear.pdf", height=6, width=8)
-rainday.summary.year
-dev.off()
+#pdf("raindaysummaryyear.pdf", height=6, width=8)
+#rainday.summary.year
+#dev.off()
 
 #and total precipitation
 precip.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=precip, fill=as.factor(year)))+
@@ -674,9 +674,9 @@ precip.summary.year<-ggplot(weather.by.year, aes(x=as.factor(year), y=precip, fi
 precip.summary.year
 
 #save to pdf
-pdf("precipsummaryyear.pdf", height=6, width=8)
-precip.summary.year
-dev.off()
+#pdf("precipsummaryyear.pdf", height=6, width=8)
+#precip.summary.year
+#dev.off()
 
 
 #is there a relationship between rain and degree day accumulation? 
@@ -760,17 +760,17 @@ with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
 
 
 #save to pdf
-pdf("NMDShabitatuseyear.pdf", height=6, width=8)
-par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-plot(ord.year, disp='sites', type='n')
-with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=1.5))
-plot(fit.year, col="red")
-ordilabel(ord.year, display="species", cex=0.75, col="black")
-with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
-                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
-                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
+#pdf("NMDShabitatuseyear.pdf", height=6, width=8)
+#par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+#plot(ord.year, disp='sites', type='n')
+#with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=1.5))
+#plot(fit.year, col="red")
+#ordilabel(ord.year, display="species", cex=0.75, col="black")
+#with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
+#                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
+#                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
 
-dev.off()
+#dev.off()
 
 #repeat with week?
 
@@ -792,16 +792,16 @@ with(env.landscape.week, legend("right", legend = levels(as.factor(year)),
                                 cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
 
 #save to pdf
-pdf("NMDShabitatuseweek.pdf", height=6, width=8)
-par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-plot(ord.week, disp='sites', type='n')
-with(env.landscape.week, points(ord.week, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=0.8))
-plot(fit.week, col="red")
-ordilabel(ord.week, display="species", cex=0.75, col="black")
-with(env.landscape.week, legend("right", legend = levels(as.factor(year)),
+#pdf("NMDShabitatuseweek.pdf", height=6, width=8)
+#par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+#plot(ord.week, disp='sites', type='n')
+#with(env.landscape.week, points(ord.week, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=0.8))
+#plot(fit.week, col="red")
+#ordilabel(ord.week, display="species", cex=0.75, col="black")
+#with(env.landscape.week, legend("right", legend = levels(as.factor(year)),
                                 bty = "n", col = "black", pch = 21, pt.bg = pal, 
                                 cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
-dev.off()
+#dev.off()
 
 #plot two plots together 
 pdf("figure3.pdf", height=8, width=8)
@@ -907,9 +907,9 @@ lampyrid.summary.ddacc.PRED<-ggplot(lampyrid.weather.summary, aes(dd.accum, avg,
 lampyrid.summary.ddacc.PRED
 
 #save to pdf
-pdf("modelddsmoothwithpredicted.pdf", height=6, width=8)
-lampyrid.summary.ddacc.PRED
-dev.off()
+#pdf("modelddsmoothwithpredicted.pdf", height=6, width=8)
+#lampyrid.summary.ddacc.PRED
+#dev.off()
 
 #Cool! So now we want to see how the peak is varying by year, and see if there are any environmental parameters that explain it
 #we first need to extract the coefficients from the lam_model
@@ -1033,6 +1033,6 @@ grid.arrange(arrangeGrob(lampyrid.summary.ddacc2, dd.vs.precip2, ncol=2, widths=
 
 
 #save to pdf
-pdf("annualreport2016.pdf", height=5, width=12)
-grid.arrange(arrangeGrob(lampyrid.summary.ddacc2, dd.vs.precip2, ncol=2, widths=c(0.45,0.55)))
-dev.off()
+#pdf("annualreport2016.pdf", height=5, width=12)
+#grid.arrange(arrangeGrob(lampyrid.summary.ddacc2, dd.vs.precip2, ncol=2, widths=c(0.45,0.55)))
+#dev.off()
