@@ -533,7 +533,7 @@ grid.arrange(arrangeGrob(lampyrid.summary.week1, lampyrid.summary.ddacc1, ncol=2
 
 
 #save to pdf
-pdf("lampyridsummaryweekandddacc.pdf", height=6, width=10)
+pdf("figure4.pdf", height=6, width=10)
 grid.arrange(arrangeGrob(lampyrid.summary.week1, lampyrid.summary.ddacc1, ncol=2, widths=c(0.49, 0.55)))
 dev.off()
 
@@ -559,7 +559,7 @@ treatment.boxplot<-ggplot(captures.by.treatment, aes(factor(TREAT_DESC), avg))+
 treatment.boxplot
 
 #save to pdf
-pdf("treatmentboxplot.pdf", height=6, width=8)
+pdf("figure1-boxplot.pdf", height=6, width=8)
 treatment.boxplot
 dev.off()
 
@@ -582,7 +582,7 @@ lampyrid.summary.treatment<-ggplot(captures.by.treatment, aes(year, avg,
 lampyrid.summary.treatment
 
 #save to pdf
-pdf("lampyridsummarytreatment.pdf", height=6, width=8)
+pdf("figure2.pdf", height=6, width=8)
 lampyrid.summary.treatment
 dev.off()
 
@@ -618,9 +618,9 @@ dev.off()
 
 #it looks like peaks by degree day accumulation is roughly synced by crop. We'll need to quantify how crop 
 #use varies between crops but it looks like these factors do not interact with time. Good! makes our analysis
-#more strightforward
+#more straightforward
 
-#Let's see if there's anyting obvious in the weather data that explains the population cycling over time 
+#Let's see if there's anything obvious in the weather data that explains the population cycling over time 
 #that we saw above
 
 #compute yearly weather summary from weather data (do't want this calulation to be affectred by length of sampling season)
@@ -761,7 +761,7 @@ with(env.landscape.year, legend("right", legend = levels(as.factor(year)),
 
 
 #save to pdf
-pdf("NMDShabitatuseyear.pdf", height=6, width=8)
+pdf("figure3.pdf", height=6, width=8)
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
 plot(ord.year, disp='sites', type='n')
 with(env.landscape.year, points(ord.year, display = "sites", col = "black", pch = 21, bg = pal[as.factor(year)], cex=1.5))
@@ -879,7 +879,7 @@ model.plot<-ggplot(model.performance.1, aes(number, value, fill=as.factor(variab
 model.plot
 
 #save to pdf
-pdf("modelplot.pdf", height=6, width=8)
+pdf("figure5.pdf", height=6, width=8)
 model.plot
 dev.off()
 
@@ -962,7 +962,7 @@ peaks.year<-ggplot(peaks, aes(x=as.factor(year), y=peak, fill=as.factor(year)))+
 peaks.year
 
 #save to pdf
-pdf("modelddpeaksbyyear.pdf", height=6, width=8)
+pdf("figure6.pdf", height=6, width=8)
 peaks.year
 dev.off()
 
@@ -1008,7 +1008,7 @@ dd.vs.precip<-ggplot(peaks, aes(precip.0, peak))+
 dd.vs.precip  
 
 #save to pdf
-pdf("modelddpeaksvsprecip.pdf", height=6, width=8)
+pdf("figure7.pdf", height=6, width=8)
 dd.vs.precip
 dev.off()
 
