@@ -532,7 +532,7 @@ grid.arrange(arrangeGrob(lampyrid.summary.week1, lampyrid.summary.ddacc1, ncol=2
 
 
 #save to pdf
-pdf("lampyridsummaryweekandddacc.pdf", height=6, width=10)
+pdf("figure4.pdf", height=6, width=10)
 grid.arrange(arrangeGrob(lampyrid.summary.week1, lampyrid.summary.ddacc1, ncol=2, widths=c(0.49, 0.55)))
 dev.off()
 
@@ -558,7 +558,7 @@ treatment.boxplot<-ggplot(captures.by.treatment, aes(factor(TREAT_DESC), avg))+
 treatment.boxplot
 
 #save to pdf
-pdf("treatmentboxplot.pdf", height=6, width=8)
+pdf("figure1.pdf", height=6, width=8)
 treatment.boxplot
 dev.off()
 
@@ -581,7 +581,7 @@ lampyrid.summary.treatment<-ggplot(captures.by.treatment, aes(year, avg,
 lampyrid.summary.treatment
 
 #save to pdf
-pdf("lampyridsummarytreatment.pdf", height=6, width=8)
+pdf("figure2.pdf", height=6, width=8)
 lampyrid.summary.treatment
 dev.off()
 
@@ -804,7 +804,7 @@ with(env.landscape.week, legend("right", legend = levels(as.factor(year)),
 dev.off()
 
 #plot two plots together 
-pdf("NMDShabitatuseAB.pdf", height=8, width=8)
+pdf("figure3.pdf", height=8, width=8)
 par(mfrow=c(2,1), mar=c(4.1, 4.8, 1.5, 8.1),xpd=TRUE) 
 
 plot(ord.year, disp='sites', type='n')
@@ -878,7 +878,7 @@ model.plot<-ggplot(model.performance.1, aes(number, value, fill=as.factor(variab
 model.plot
 
 #save to pdf
-pdf("modelplot.pdf", height=6, width=8)
+pdf("figure5.pdf", height=6, width=8)
 model.plot
 dev.off()
 
@@ -961,7 +961,7 @@ peaks.year<-ggplot(peaks, aes(x=as.factor(year), y=peak, fill=as.factor(year)))+
 peaks.year
 
 #save to pdf
-pdf("modelddpeaksbyyear.pdf", height=6, width=8)
+pdf("figure6.pdf", height=6, width=8)
 peaks.year
 dev.off()
 
@@ -1007,7 +1007,7 @@ dd.vs.precip<-ggplot(peaks, aes(precip.0, peak))+
 dd.vs.precip  
 
 #save to pdf
-pdf("modelddpeaksvsprecip.pdf", height=6, width=8)
+pdf("figure7.pdf", height=6, width=8)
 dd.vs.precip
 dev.off()
 
