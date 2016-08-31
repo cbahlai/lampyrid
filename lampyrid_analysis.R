@@ -799,8 +799,8 @@ with(env.landscape.week, legend("right", legend = levels(as.factor(year)),
 #plot(fit.week, col="red")
 #ordilabel(ord.week, display="species", cex=0.75, col="black")
 #with(env.landscape.week, legend("right", legend = levels(as.factor(year)),
-                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
-                                cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
+#                                bty = "n", col = "black", pch = 21, pt.bg = pal, 
+#                               cex=1, pt.cex=1.5, inset=c(-0.2, 0), title="Year"))
 #dev.off()
 
 #plot two plots together 
