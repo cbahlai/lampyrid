@@ -6,7 +6,7 @@ Our aim was to do an analysis examining what factors (weather, dd accumulation, 
 We collaboratively came up with biological hypotheses, cleaned and formatted the dataset, analysed the data and wrote the manuscript. 
 
 **Manuscript Link:**
-Link to the (read-only) version of the overleaf manuscript: https://www.overleaf.com/read/bftqgffvxhwq
+Pre-print on bioRxiv: http://biorxiv.org/content/early/2016/09/11/074633
 
 **Citation Managment Link:**
 Link to the group Zotero: https://www.zotero.org/groups/firefly
